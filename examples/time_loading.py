@@ -37,7 +37,6 @@ def nwb_example(nwb_path):
 
 
 def main(cache_is_s3=True):
-    # TODO try with local cache only
     if cache_is_s3:
         cache = VisualBehaviorNeuropixelsProjectCache.from_s3_cache(cache_dir=ALLEN_DIR)
     else:
@@ -54,7 +53,6 @@ def main(cache_is_s3=True):
         / f"ecephys_session_{EXAMPLE_SESSION}.nwb"
     )
 
-    # These should be order independent
     nwb_example(nwb_path)
     allen_example(cache)
 
