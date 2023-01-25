@@ -97,7 +97,7 @@ def filter_good_units(unit_channels, sort_=True):
             "probe_vertical_position", ascending=False
         )
     good_unit_filter = (
-        (unit_channels["isi_violations"] < 0.5) # Well isolated units
+        (unit_channels["isi_violations"] < 0.4) # Well isolated units
         & (unit_channels["nn_hit_rate"] > 0.9) # Well isolated units
         & (unit_channels["amplitude_cutoff"] < 0.1) # Units that have most of their activations
         & (unit_channels["presence_ratio"] > 0.9) # Tracked for 90% of the recording
