@@ -4,33 +4,56 @@ import numpy as np
 from skm_pyutils.table import list_to_df
 
 
-def extract_useful_allen(recording):
-    def filter_units(unit_channels):
+def filter_good_units(unit_channels, sort_=True):
+    # Very NB https://allensdk.readthedocs.io/en/latest/_static/examples/nb/visual_behavior_neuropixels_quality_metrics.html
+    if sort_:
         unit_channels = unit_channels.sort_values(
             "probe_vertical_position", ascending=False
         )
-        good_unit_filter = (
-            (unit_channels["snr"] > 1)
-            & (unit_channels["isi_violations"] < 1)
-            & (unit_channels["firing_rate"] > 0.01)
-            & (unit_channels["quality"])
-        )
-        return unit_channels[good_unit_filter]
+    good_unit_filter = (
+        (unit_channels["isi_violations"] < 0.4)  # Well isolated units
+        & (unit_channels["nn_hit_rate"] > 0.9)  # Well isolated units
+        & (
+            unit_channels["amplitude_cutoff"] < 0.1
+        )  # Units that have most of their activations
+        & (unit_channels["presence_ratio"] > 0.9)  # Tracked for 90% of the recording
+        # & (unit_channels["quality"] == "good") # Non-artifactual waveform
+    )
 
+    return unit_channels.loc[good_unit_filter]
+
+
+def extract_useful_allen(recording, filter_units=False):
     session = recording.data
-    units = session.get_units()
+    if filter_units:
+        # Removes noisy waveforms and units not in a brain area
+        units = session.get_units(
+            filter_by_validity=True,
+            filter_out_of_brain_units=True,
+        )
+    else:
+        units = session.get_units()
     channels = session.get_channels()
     unit_channels = units.merge(channels, left_on="peak_channel_id", right_index=True)
     unit_channels.to_csv("units.csv")
 
+    # See https://allensdk.readthedocs.io/en/latest/_static/examples/nb/aligning_behavioral_data_to_task_events_with_the_stimulus_and_trials_tables.html
     stimulus_presentations = session.stimulus_presentations
-    change_times = stimulus_presentations[
+    active_stimuli = stimulus_presentations[
         stimulus_presentations["active"] & stimulus_presentations["is_change"]
-    ]["start_time"].values
+    ]
+    passed = active_stimuli["rewarded"]
+    trial_times = np.zeros(shape=(len(active_stimuli), 2))
+    trial_times[:, 0] = active_stimuli["start_time"]
+    trial_times[:, 1] = active_stimuli["end_time"]
+    good_units = filter_good_units(unit_channels)
+    good_units.to_csv("good_units.csv")
 
-    good_units = filter_units(unit_channels)
+    good_spikes = {
+        k: v for k, v in session.spike_times.items() if k in good_units.index
+    }
 
-    return change_times, good_units, session.spike_times
+    return trial_times, good_units, good_spikes, passed
 
 
 def allen_to_general_bridge(recording):
@@ -112,4 +135,4 @@ def simple_behaviour_compare(spike_train, passes, trial_times):
 
     result_df = list_to_df(result_list, ["Passed", "Unit", "Num spikes"])
 
-    return result_df
+    return result_df.groupby(["Passed", "Unit"]).mean()
