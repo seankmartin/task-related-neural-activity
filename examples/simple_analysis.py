@@ -80,7 +80,7 @@ def filter_good_one_units(recording):
             (unit_table["presence_ratio"] > 0.9)
             & (unit_table["contamination"] < 0.4)
             & (unit_table["noise_cutoff"] < 25)
-            & (unit_table["amp_median"] > 30 * 10**-6)
+            & (unit_table["amp_median"] > 40 * 10**-6)
         )
         results[k] = unit_table.loc[conditions]
     return results
