@@ -1,38 +1,21 @@
-# PythonTemplate
-[![Build Status](https://travis-ci.com/seankmartin/PythonTemplate.svg?branch=master)](https://travis-ci.com/seankmartin/PythonTemplate)
-[![Documentation Status](https://readthedocs.org/projects/pythontemplate/badge/?version=latest)](https://pythontemplate.readthedocs.io/en/latest/?badge=latest)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# Task related neural activity
 
-A template for Python Projects.
+[![PyPI - Version](https://img.shields.io/pypi/v/task-related-neural-activity.svg)](https://pypi.org/project/task-related-neural-activity)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/task-related-neural-activity.svg)](https://pypi.org/project/task-related-neural-activity)
 
-## How to convert to your project
-1. Rename the folder `your_package` and edit `your_package/__init__.py`
-2. Update `setup.py, version.txt, requirements.txt, dev_requirements.txt, LICENSE` to allow for users to install your package using `pip install .` or uploading to PyPI.
-3. Update `README.md`.
-4. Add the correct Makefile or batch script etc. to docs to allow for building documentation. Most likely this will use sphinx or pdoc3.
-5. Add your tests to the tests folder that can be run with pytest or a similar testing framework.
+-----
 
-Optionally, you could also setup continuous integration with CircleCI or similar, and setup git hooks.
+**Table of Contents**
 
-Check [my website](https://seankmartin.netlify.app/python/getting-your-code-out-there/#uploading-your-package-to-pypi) for more information.
-
-# README Template Below
-
-# Project Name
-Give a succinct description of the project.
+- [Installation](#installation)
+- [License](#license)
 
 ## Installation
-Describe how to install stable version and dev version.
 
-## Dependencies
-List what installation requires.
+```console
+pip install task-related-neural-activity
+```
 
-## Documentation
-Link to where can further documentation be found.
+## License
 
-## Contributing
-Show the guide for contributing.
-
-## Licensing
-What License the project is provided under.
+`task-related-neural-activity` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
