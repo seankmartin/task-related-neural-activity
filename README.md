@@ -7,8 +7,9 @@
 
 **Table of Contents**
 
-- [Installation](#installation)
-- [License](#license)
+- [Task related neural activity](#task-related-neural-activity)
+  - [Installation](#installation)
+  - [License](#license)
 
 ## Installation
 
