@@ -1,6 +1,6 @@
-
 import numpy as np
 from skm_pyutils.table import list_to_df
+
 
 def simple_behaviour_compare(spike_train, passes, trial_times):
     """

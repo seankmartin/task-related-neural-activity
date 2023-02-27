@@ -3,7 +3,9 @@ from pathlib import Path
 from simuran import ParamHandler
 
 
-def split_spikes_into_trials(spike_train, trial_start_ends, end_time=None, num_trials=None):
+def split_spikes_into_trials(
+    spike_train, trial_start_ends, end_time=None, num_trials=None
+):
     """
     Split the spike train into trials.
 
@@ -61,8 +63,8 @@ def split_trajectories(trajectories, trial_correct):
         The trajectories of the neurons with GPFA applied for incorrect trials.
 
     """
-    correct = trajectories[trial_correct == 1]
-    incorrect = trajectories[trial_correct == 0]
+    correct = trajectories[trial_correct]
+    incorrect = trajectories[~trial_correct]
     return correct, incorrect
 
 

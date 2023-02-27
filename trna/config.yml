@@ -1,7 +1,7 @@
-local_dir: G:\\OpenData
+local_dir: G:\OpenData
 drive_dir: /content/drive/MyDrive/NeuroScience/OpenData/
 allen_name: allen_npixels2
 ibl_name: IBLdata
 allen_manifest: visual-behavior-neuropixels_project_manifest_v0.4.0.json
 output_name: OpenDataResults
-gpfa_window: 0.3
+gpfa_window: 0.6

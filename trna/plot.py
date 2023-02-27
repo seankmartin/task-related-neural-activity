@@ -5,18 +5,18 @@ import numpy as np
 def simple_trajectory_plot(correct, incorrect):
     """
     Plot the average trajectory for correct and incorrect trials.
-    
+
     Parameters:
     -----------
     correct: np.ndarray
         The trajectories of the neurons with GPFA applied for correct trials.
     incorrect: np.ndarray
         The trajectories of the neurons with GPFA applied for incorrect trials.
-    
+
     Returns:
     --------
     figure: matplotlib.figure.Figure
-    
+
     """
     average_trajectory_pass = np.mean(correct, axis=0)
     average_trajectory_fail = np.mean(incorrect, axis=0)
@@ -61,4 +61,4 @@ def simple_trajectory_plot(correct, incorrect):
     )
     ax.legend()
 
-    return fig 
+    return fig

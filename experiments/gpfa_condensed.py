@@ -14,11 +14,13 @@ def name_from_recording(recording, filename):
     return name
 
 
-def analyse_single_recording(recording, gpfa_window, is_allen=False):
+def analyse_single_recording(recording, gpfa_window, out_dir, is_allen=False):
     if is_allen:
+        print("Analysing allen recording: " + recording.get_name_for_save())
         unit_table, spike_train = allen_spike_train(recording)
         trial_info = allen_trial_info(recording)
     else:
+        print("Analysing IBL recording: " + recording.get_name_for_save())
         unit_table, spike_train = one_spike_train(recording)
         trial_info = one_trial_info(recording)
     per_trial_spikes = split_spikes_into_trials(
@@ -37,14 +39,18 @@ def main():
     allen_recording_container, allen_loader = load_allen(
         config["allen_data_dir"], config["allen_manifest"]
     )
+    example_allen = allen_recording_container.load(0)
+    trial_info = allen_trial_info(example_allen)
     ibl_recording_container, ibl_loader = load_ibl(config["ibl_data_dir"])
 
     # TODO replace by for loop
     example_one = ibl_recording_container.load(0)
     example_allen = allen_recording_container.load(0)
 
-    analyse_single_recording(example_one, config["gpfa_window"])
-    analyse_single_recording(example_allen, config["gpfa_window"], is_allen=True)
+    analyse_single_recording(example_one, config["gpfa_window"], config["output_dir"])
+    analyse_single_recording(
+        example_allen, config["gpfa_window"], config["output_dir"], is_allen=True
+    )
 
 
 if __name__ == "__main__":

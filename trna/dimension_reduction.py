@@ -5,7 +5,7 @@ import quantities as pq
 def elephant_gpfa(per_trial_spike_train, trial_length, bin_size=20 * pq.ms, num_dim=3):
     """
     Perform GPFA on the spike trains.
-    
+
     Parameters:
     -----------
     per_trial_spike_train: list
@@ -16,7 +16,7 @@ def elephant_gpfa(per_trial_spike_train, trial_length, bin_size=20 * pq.ms, num_
         Size of the bins to use.
     num_dim: int
         Number of dimensions to use.
-    
+
     Returns:
     --------
     gpfa_ndim: elephant.gpfa.GPFA
@@ -46,7 +46,7 @@ def elephant_gpfa(per_trial_spike_train, trial_length, bin_size=20 * pq.ms, num_
 def scikit_cca(trial_rates1, trial_rates2, n_components=1):
     """
     Perform CCA on the spike trains.
-    
+
     Parameters:
     -----------
     trial_rates1: np.ndarray
@@ -55,7 +55,7 @@ def scikit_cca(trial_rates1, trial_rates2, n_components=1):
         The spike rates for the second set of neurons.
     n_components: int
         Number of dimensions to use.
-    
+
     Returns:
     --------
     cca: sklearn.cross_decomposition.CCA
@@ -64,10 +64,11 @@ def scikit_cca(trial_rates1, trial_rates2, n_components=1):
         The transformed data for the first set of neurons.
     Y: np.ndarray
         The transformed data for the second set of neurons.
-    
+
     """
     from sklearn.cross_decomposition import CCA
+
     cca = CCA(n_components=n_components)
     X, Y = cca.fit_transform(trial_rates1, trial_rates2)
 
-    return cca, X, Y 
+    return cca, X, Y
