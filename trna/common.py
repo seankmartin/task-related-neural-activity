@@ -1,7 +1,9 @@
 import numpy as np
+from pathlib import Path
+from simuran import ParamHandler
 
 
-def split_spikes_into_trials(spike_train, trial_info, end_time=None, num_trials=None):
+def split_spikes_into_trials(spike_train, trial_start_ends, end_time=None, num_trials=None):
     """
     Split the spike train into trials.
 
@@ -9,7 +11,7 @@ def split_spikes_into_trials(spike_train, trial_info, end_time=None, num_trials=
     -----------
     spike_train: dict
         Dictionary of spike trains for each neuron.
-    trial_info: List of tuples
+    trial_start_ends: List of tuples
         Trial start and end information.
     end_time: float
         End time of each trial.
@@ -26,10 +28,10 @@ def split_spikes_into_trials(spike_train, trial_info, end_time=None, num_trials=
     end_time = (
         end_time
         if end_time is not None
-        else np.median([t[1] - t[0] for t in trial_info]) * 1.2
+        else np.median([t[1] - t[0] for t in trial_start_ends]) * 1.2
     )
     new_spike_train = []
-    for i, (start, end) in enumerate(trial_info):
+    for i, (start, end) in enumerate(trial_start_ends):
         if (num_trials is not None) and (i == num_trials):
             break
         trial_spike_train = []
@@ -62,3 +64,37 @@ def split_trajectories(trajectories, trial_correct):
     correct = trajectories[trial_correct == 1]
     incorrect = trajectories[trial_correct == 0]
     return correct, incorrect
+
+
+def load_config(config_path=None):
+    """
+    Establish the config for the project.
+
+    Parameters:
+    -----------
+    config_path: str
+        The path to the config file. If None, uses the default.
+        The default is the config file config.yml in the project.
+
+    Returns:
+    --------
+    parameters: ParamHandler
+        The parameters for the project. Like a dict.
+
+    """
+    config_path = config_path or Path(__file__).parent / "config.yml"
+    parameters = ParamHandler(source_file=config_path)
+
+    try:
+        from google.colab import drive
+
+        drive.mount("/content/drive")
+        data_directory = Path(parameters["drive_dir"])
+    except ModuleNotFoundError:
+        data_directory = Path(parameters["local_dir"])
+
+    parameters["allen_data_dir"] = data_directory / parameters["allen_name"]
+    parameters["ibl_data_dir"] = data_directory / parameters["ibl_name"]
+    parameters["output_dir"] = data_directory / parameters["output_name"]
+
+    return parameters
