@@ -63,8 +63,8 @@ def split_trajectories(trajectories, trial_correct):
         The trajectories of the neurons with GPFA applied for incorrect trials.
 
     """
-    correct = trajectories[trial_correct]
-    incorrect = trajectories[~trial_correct]
+    correct = trajectories[np.array(trial_correct).astype(bool)]
+    incorrect = trajectories[~np.array(trial_correct).astype(bool)]
     return correct, incorrect
 
 
