@@ -47,7 +47,11 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, is_allen
         trial_info = one_trial_info(recording)
 
     (out_dir / "tables").mkdir(parents=True, exist_ok=True)
-    unit_table.to_csv(out_dir / "tables" / name_from_recording(recording, "unit_table.csv", rel_dir=rel_dir))
+    unit_table.to_csv(
+        out_dir
+        / "tables"
+        / name_from_recording(recording, "unit_table.csv", rel_dir=rel_dir)
+    )
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
     )
@@ -55,6 +59,11 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, is_allen
     correct, incorrect = split_trajectories(trajectories, trial_info["trial_correct"])
     info = {"correct": correct, "incorrect": incorrect}
     save_info_to_file(info, recording, out_dir, rel_dir)
+    print(
+        "Finished analysing: "
+        + recording.get_name_for_save()
+        + f"with {len(correct)} correct and {len(incorrect)} incorrect trials and {len(unit_table)} units"
+    )
     return info
 
 
@@ -62,6 +71,7 @@ def load_data(recording, out_dir, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
     save_name = out_dir / "pickles" / (name + "_gpfa" + ".pkl")
     if save_name.exists():
+        print("Loading data for: " + recording.get_name_for_save(rel_dir=rel_dir))
         with open(save_name, "rb") as f:
             info = pickle.load(f)
         return info
@@ -112,6 +122,9 @@ def main(overwrite=False):
     example_allen = allen_recording_container.load(0)
     trial_info = allen_trial_info(example_allen)
     ibl_recording_container, ibl_loader = load_ibl(config["ibl_data_dir"])
+    out_loc = config["output_dir"] / "tables" / "ibl_sessions.csv"
+    out_loc.parent.mkdirs(parents=True, exist_ok=True)
+    ibl_loader.get_session_table().to_csv(out_loc, index=False)
 
     analyse_container(overwrite, config, ibl_recording_container)
     analyse_container(overwrite, config, allen_recording_container, is_allen=True)
