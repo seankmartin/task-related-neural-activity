@@ -25,13 +25,13 @@ def simple_trajectory_plot(correct, incorrect):
     ax = fig.add_subplot(projection="3d")
 
     # Do the plot for pass and fail
-    ax.plot(*average_trajectory_pass, label="Average nueral trajectory pass")
+    ax.plot(*average_trajectory_pass, label="Catch neural trajectory")
     ax.plot(
         average_trajectory_pass[0][0],
         average_trajectory_pass[1][0],
         average_trajectory_pass[2][0],
         "o",
-        color="red",
+        color="green",
         label="Start",
     )
     ax.plot(
@@ -39,16 +39,16 @@ def simple_trajectory_plot(correct, incorrect):
         average_trajectory_pass[1][-1],
         average_trajectory_pass[2][-1],
         "o",
-        color="green",
+        color="red",
         label="End",
     )
-    ax.plot(*average_trajectory_fail, "--", label="Average nueral trajectory fail")
+    ax.plot(*average_trajectory_fail, "--", label="Miss nueral trajectory")
     ax.plot(
         average_trajectory_fail[0][0],
         average_trajectory_fail[1][0],
         average_trajectory_fail[2][0],
         "o",
-        color="red",
+        color="green",
         label="Start",
     )
     ax.plot(
@@ -56,7 +56,7 @@ def simple_trajectory_plot(correct, incorrect):
         average_trajectory_fail[1][-1],
         average_trajectory_fail[2][-1],
         "o",
-        color="green",
+        color="red",
         label="End",
     )
     ax.legend()
