@@ -26,7 +26,7 @@ def simple_trajectory_plot(correct, incorrect):
 
     # Do the plot for pass and fail
     ax.plot(*average_trajectory_pass, label="Catch neural trajectory")
-    ax.plot(*average_trajectory_fail, "--", label="Miss nueral trajectory")
+    ax.plot(*average_trajectory_fail, "--", label="Miss neural trajectory")
     ax.plot(
         average_trajectory_pass[0][0],
         average_trajectory_pass[1][0],

@@ -62,7 +62,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, is_allen
     print(
         "Finished analysing: "
         + recording.get_name_for_save()
-        + f"with {len(correct)} correct and {len(incorrect)} incorrect trials and {len(unit_table)} units"
+        + f" with {len(correct)} correct and {len(incorrect)} incorrect trials and {len(unit_table)} units"
     )
     return info
 
@@ -123,8 +123,8 @@ def main(overwrite=False):
     trial_info = allen_trial_info(example_allen)
     ibl_recording_container, ibl_loader = load_ibl(config["ibl_data_dir"])
     out_loc = config["output_dir"] / "tables" / "ibl_sessions.csv"
-    out_loc.parent.mkdirs(parents=True, exist_ok=True)
-    ibl_loader.get_session_table().to_csv(out_loc, index=False)
+    out_loc.parent.mkdir(parents=True, exist_ok=True)
+    ibl_loader.get_sessions_table().to_csv(out_loc, index=False)
 
     analyse_container(overwrite, config, ibl_recording_container)
     analyse_container(overwrite, config, allen_recording_container, is_allen=True)
