@@ -84,7 +84,7 @@ def load_config(config_path=None):
         The parameters for the project. Like a dict.
 
     """
-    config_path = config_path or Path(__file__).parent / "config.yml"
+    config_path = config_path or Path(__file__).parent.parent / "config" / "config.yaml"
     parameters = ParamHandler(source_file=config_path)
 
     try:
