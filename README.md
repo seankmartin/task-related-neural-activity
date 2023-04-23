@@ -14,7 +14,9 @@
 ## Installation
 
 ```console
-pip install task-related-neural-activity
+git clone https://github.com/seankmartin/task-related-neural-activity
+python -m pip install --upgrade pip
+pip install -e .
 ```
 
 ## License
