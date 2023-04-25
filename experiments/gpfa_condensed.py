@@ -5,8 +5,6 @@ from trna.ibl import load_ibl
 from trna.dimension_reduction import elephant_gpfa
 from trna.plot import simple_trajectory_plot
 
-# TODO turning this into a class could be very beneficial
-# How to analyse it is inferred based on the loader
 from simuran.bridges.ibl_wide_bridge import (
     one_spike_train,
     one_trial_info,

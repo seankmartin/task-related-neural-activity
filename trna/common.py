@@ -68,7 +68,7 @@ def split_trajectories(trajectories, trial_correct):
     return correct, incorrect
 
 
-def load_config(config_path=None):
+def load_config(config_path=None, config=None):
     """
     Establish the config for the project.
 
@@ -84,8 +84,13 @@ def load_config(config_path=None):
         The parameters for the project. Like a dict.
 
     """
-    config_path = config_path or Path(__file__).parent.parent / "config" / "config.yaml"
-    parameters = ParamHandler(source_file=config_path)
+    if config is None:
+        config_path = (
+            config_path or Path(__file__).parent.parent / "config" / "config.yaml"
+        )
+        parameters = ParamHandler(source_file=config_path)
+    else:
+        parameters = ParamHandler(attrs=config)
 
     try:
         from google.colab import drive

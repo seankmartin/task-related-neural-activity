@@ -25,11 +25,11 @@ def elephant_gpfa(per_trial_spike_train, trial_length, bin_size=20 * pq.ms, num_
         The trajectories of the neurons with GPFA applied.
 
     """
-    from simuran.bridges.neo_bridge import convert_spikes_to_train
+    from simuran.bridges.neo_bridge import NeoBridge
     from elephant.gpfa import GPFA
 
     neo_trains = [
-        convert_spikes_to_train(small_train, custom_t_stop=trial_length)
+        NeoBridge.convert_spikes(small_train, custom_t_stop=trial_length)
         for small_train in per_trial_spike_train
     ]
 

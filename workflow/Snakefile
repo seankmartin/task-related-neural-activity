@@ -1,9 +1,11 @@
 configfile: "config/config.yaml"
 
 include: "rules/process_data.smk"
+include: "rules/analyse_data.smk"
 
 rule all:
     input:
         [
-            "results/temp"
+            f"{config['local_dir']}/OpenDataResults/tables/allen_gpfa.csv",
+            f"{config['local_dir']}/OpenDataResults/tables/ibl_gpfa.csv"
         ]

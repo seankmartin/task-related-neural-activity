@@ -5,3 +5,5 @@ ibl_name: IBLdata
 allen_manifest: visual-behavior-neuropixels_project_manifest_v0.4.0.json
 output_name: OpenDataResults
 gpfa_window: 1.0
+allen_brain_regions: ["CA1", "TH", "SUB"]
+ibl_brain_regions: ["CA1", "TH", "SUB"]
