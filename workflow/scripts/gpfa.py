@@ -27,14 +27,12 @@ def save_info_to_file(info, recording, out_dir, rel_dir=None):
         pickle.dump(info, f)
 
 
-def analyse_single_recording(recording, gpfa_window, out_dir, base_dir):
+def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_regions):
     print("Analysing recording: " + recording.get_name_for_save())
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
-    unit_table, spike_train = bridge.spike_train(
-        recording, brain_regions=["CA1", "TH", "VISp"]
-    )
+    unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
     trial_info = bridge.trial_info(recording)
 
     (out_dir / "tables").mkdir(parents=True, exist_ok=True)
@@ -83,8 +81,10 @@ def analyse_container(overwrite, config, recording_container):
     is_allen = isinstance(recording_container[0].loader, BaseAllenLoader)
     if is_allen:
         rel_dir_path = "allen_data_dir"
+        brain_regions = config["allen_brain_regions"]
     else:
         rel_dir_path = "ibl_data_dir"
+        brain_regions = config["ibl_brain_regions"]
     for i, ibl_recording in enumerate(recording_container):
         # TODO this is a hack to only do a few
         if i > 3:
@@ -99,6 +99,7 @@ def analyse_container(overwrite, config, recording_container):
                 config["gpfa_window"],
                 config["output_dir"],
                 config[rel_dir_path],
+                brain_regions,
             )
         plot_data(
             ibl_recording, info, config["output_dir"], rel_dir=config[rel_dir_path]
