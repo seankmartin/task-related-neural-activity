@@ -44,7 +44,13 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
     )
-    gpfa_result, trajectories = elephant_gpfa(per_trial_spikes, gpfa_window, num_dim=3)
+    try:
+        gpfa_result, trajectories = elephant_gpfa(
+            per_trial_spikes, gpfa_window, num_dim=3
+        )
+    except ValueError:
+        print("Not enough spikes for GPFA")
+        return None
     correct, incorrect = split_trajectories(trajectories, trial_info["trial_correct"])
     info = {"correct": correct, "incorrect": incorrect}
     save_info_to_file(info, recording, out_dir, rel_dir)
@@ -60,7 +66,9 @@ def load_data(recording, out_dir, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
     save_name = out_dir / "pickles" / (name + "_gpfa" + ".pkl")
     if save_name.exists():
-        print("Loading data for: " + recording.get_name_for_save(rel_dir=rel_dir))
+        print(
+            "Loading pickle data for: " + recording.get_name_for_save(rel_dir=rel_dir)
+        )
         with open(save_name, "rb") as f:
             info = pickle.load(f)
         return info
@@ -85,25 +93,21 @@ def analyse_container(overwrite, config, recording_container):
     else:
         rel_dir_path = "ibl_data_dir"
         brain_regions = config["ibl_brain_regions"]
-    for i, ibl_recording in enumerate(recording_container):
-        # TODO this is a hack to only do a few
-        if i > 3:
-            break
-        info = load_data(
-            ibl_recording, config["output_dir"], rel_dir=config[rel_dir_path]
-        )
+    for i, recording in enumerate(recording_container):
+        info = load_data(recording, config["output_dir"], rel_dir=config[rel_dir_path])
         if info is None or overwrite:
-            ibl_recording = recording_container.load(i)
+            recording = recording_container.load(i)
             info = analyse_single_recording(
-                ibl_recording,
+                recording,
                 config["gpfa_window"],
                 config["output_dir"],
                 config[rel_dir_path],
                 brain_regions,
             )
-        plot_data(
-            ibl_recording, info, config["output_dir"], rel_dir=config[rel_dir_path]
-        )
+        if info is not None:
+            plot_data(
+                recording, info, config["output_dir"], rel_dir=config[rel_dir_path]
+            )
 
 
 def main(main_config, brain_table_location, overwrite=False):
