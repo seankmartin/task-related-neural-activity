@@ -5,5 +5,5 @@ ibl_name: IBLdata
 allen_manifest: visual-behavior-neuropixels_project_manifest_v0.4.0.json
 output_name: OpenDataResults
 gpfa_window: 1.0
-allen_brain_regions: ["CA1", "TH", "SUB"]
-ibl_brain_regions: ["CA1", "TH", "SUB"]
+allen_brain_regions: [["CA1", "TH", "SUB"], ["VISp", "LGv", "VISl"]]
+ibl_brain_regions: [["CA1", "TH", "SUB"], [("VISp1, VISp2/3, VISp4, VISp5, VISp6a, VISp6b"), "LGv", ("VISl1", "VISl2/3", "VISp4", "VISp5", "VISp6a", "VISp6b")]]

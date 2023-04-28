@@ -16,6 +16,15 @@ def filter_allen_table(allen_table, brain_regions):
 
 
 def filter_ibl_table(ibl_table, region_table, brain_regions):
+    def check_brain_regions(x):
+        x = ast.literal_eval(x)
+        matches = []
+        for br in brain_regions:
+            if isinstance(br, str):
+                matches.append(br in x)
+            else:
+                matches.append(any([b in x for b in br]))
+
     desired_sessions = region_table[
         region_table["regions"].apply(lambda x: all([br in x for br in brain_regions]))
     ]

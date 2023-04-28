@@ -43,6 +43,33 @@ def elephant_gpfa(per_trial_spike_train, trial_length, bin_size=20 * pq.ms, num_
     return gpfa_ndim, trajectories
 
 
+def scikit_fa(trial_rates, n_components=3):
+    """
+    Perform FA on the spike trains.
+
+    Parameters:
+    -----------
+    trial_rates: np.ndarray
+        The spike rates for the neurons.
+    n_components: int
+        Number of dimensions to use.
+
+    Returns:
+    --------
+    fa: sklearn.decomposition.FactorAnalysis
+        The fitted FA object.
+    X: np.ndarray
+        The transformed data.
+
+    """
+    from sklearn.decomposition import FactorAnalysis
+
+    fa = FactorAnalysis(n_components=n_components, random_state=0)
+    X = fa.fit_transform(trial_rates)
+
+    return fa, X
+
+
 def scikit_cca(trial_rates1, trial_rates2, n_components=1):
     """
     Perform CCA on the spike trains.
@@ -71,4 +98,4 @@ def scikit_cca(trial_rates1, trial_rates2, n_components=1):
     cca = CCA(n_components=n_components)
     X, Y = cca.fit_transform(trial_rates1, trial_rates2)
 
-    return cca, X, Y
+    return cca, [X, Y]
