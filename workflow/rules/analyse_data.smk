@@ -5,5 +5,7 @@ rule analyse_gpfa:
         directory(f"{config['local_dir']}/OpenDataResults/gpfa")
     params:
         overwrite = False
+    log:
+        f"{config['local_dir']}/OpenDataResults/logs/gpfa.log"
     script:
         "../scripts/gpfa.py"

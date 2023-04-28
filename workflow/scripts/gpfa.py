@@ -23,9 +23,21 @@ def name_from_recording(recording, filename, rel_dir=None):
     return name
 
 
+def regions_to_string(brain_regions):
+    s = ""
+    for region_set in brain_regions:
+        for r in region_set:
+            if isinstance(r, str):
+                s += r + "_"
+            else:
+                for r2 in r:
+                    s += r2 + "_"
+    return s[:-1]
+
+
 def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
-    regions_as_str = "_".join(regions)
+    regions_as_str = regions_to_string(regions)
     save_name = out_dir / "pickles" / (name + regions_as_str + "_gpfa" + ".pkl")
     save_name.parent.mkdir(parents=True, exist_ok=True)
     with open(save_name, "wb") as f:
@@ -40,12 +52,14 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
     if len(unit_table) == 0:
         return None
+    regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)
 
+    out_dir.mkdir(parents=True, exist_ok=True)
     unit_table.to_csv(
         out_dir
         / name_from_recording(
-            recording, f"unit_table_{brain_regions}.csv", rel_dir=rel_dir
+            recording, f"unit_table_{regions_as_str}.csv", rel_dir=rel_dir
         )
     )
     per_trial_spikes = split_spikes_into_trials(
@@ -71,7 +85,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
         "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir)
-    with open(out_dir / f"gpfa_{brain_regions}.txt") as f:
+    with open(out_dir / f"gpfa_{regions_as_str}.txt") as f:
         f.write(
             "Finished analysing: "
             + recording.get_name_for_save()
@@ -82,7 +96,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
 
 def load_data(recording, out_dir, regions, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
-    regions_as_str = "_".join(regions)
+    regions_as_str = regions_as_str(regions)
     save_name = out_dir / "pickles" / (name + regions_as_str + "_gpfa" + ".pkl")
     if save_name.exists():
         print(
@@ -95,12 +109,15 @@ def load_data(recording, out_dir, regions, rel_dir=None):
         return None
 
 
-def plot_data(recording, info, out_dir, rel_dir=None):
+def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
+    regions_as_str = regions_to_string(brain_regions)
     for key, value in info.items():
         correct = value["correct"]
         incorrect = value["incorrect"]
         fig = simple_trajectory_plot(correct, incorrect)
-        out_name = name_from_recording(recording, f"gpfa_{key}.png", rel_dir=rel_dir)
+        out_name = name_from_recording(
+            recording, f"gpfa_{key}_{regions_as_str}.png", rel_dir=rel_dir
+        )
         fig = SimuranFigure(fig, str(out_dir / out_name))
         fig.save()
 
@@ -138,7 +155,9 @@ def analyse_container(overwrite, config, recording_container):
                     regions,
                 )
             if info is not None:
-                plot_data(recording, info, output_dir, rel_dir=config[rel_dir_path])
+                plot_data(
+                    recording, info, output_dir, regions, rel_dir=config[rel_dir_path]
+                )
 
 
 def main(main_config, brain_table_location, overwrite=False):
