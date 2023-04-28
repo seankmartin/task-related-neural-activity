@@ -25,14 +25,9 @@ def name_from_recording(recording, filename, rel_dir=None):
 
 def regions_to_string(brain_regions):
     s = ""
-    for region_set in brain_regions:
-        for r in region_set:
-            if isinstance(r, str):
-                s += r + "_"
-            else:
-                for r2 in r:
-                    s += r2 + "_"
-    return s[:-1]
+    for r in brain_regions:
+        s += r + "_"
+    return s[:-1].replace("/", "-")
 
 
 def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
@@ -96,7 +91,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
 
 def load_data(recording, out_dir, regions, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
-    regions_as_str = regions_as_str(regions)
+    regions_as_str = regions_to_string(regions)
     save_name = out_dir / "pickles" / (name + regions_as_str + "_gpfa" + ".pkl")
     if save_name.exists():
         print(
@@ -142,6 +137,7 @@ def analyse_container(overwrite, config, recording_container):
                 else:
                     for sub_region in region:
                         regions.append(sub_region)
+            print(f"Working on {regions}")
             info = load_data(
                 recording, output_dir, regions, rel_dir=config[rel_dir_path]
             )
