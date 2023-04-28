@@ -5,7 +5,7 @@ import pandas as pd
 from trna.common import load_config, split_spikes_into_trials, split_trajectories
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.dimension_reduction import elephant_gpfa, scikit_cca, scikit_fa
+from trna.dimension_reduction import elephant_gpfa, scikit_fa
 from trna.plot import simple_trajectory_plot
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
