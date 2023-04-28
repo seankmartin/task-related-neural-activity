@@ -25,9 +25,7 @@ def filter_ibl_table(ibl_table, region_table, brain_regions):
             else:
                 matches.append(any([b in x for b in br]))
 
-    desired_sessions = region_table[
-        region_table["regions"].apply(lambda x: all([br in x for br in brain_regions]))
-    ]
+    desired_sessions = region_table[region_table["regions"].apply(check_brain_regions)]
     filtered_table = ibl_table.loc[
         ibl_table["session"].isin(desired_sessions["session"])
     ]
