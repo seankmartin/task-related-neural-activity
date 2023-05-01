@@ -43,7 +43,7 @@ def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
 
 
 def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_regions):
-    print("Analysing recording: " + recording.get_name_for_save())
+    print("Analysing recording: " + recording.get_name_for_save(base_dir))
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
@@ -84,7 +84,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     with open(out_dir / f"gpfa_{regions_as_str}.txt") as f:
         f.write(
             "Finished analysing: "
-            + recording.get_name_for_save()
+            + recording.get_name_for_save(rel_dir)
             + f" with {len(correct)} correct and {len(incorrect)} incorrect trials and {len(unit_table)} units"
         )
     return info
