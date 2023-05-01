@@ -1,5 +1,6 @@
 import logging
 import pickle
+import numpy as np
 
 import pandas as pd
 from trna.common import load_config, split_spikes_into_trials, split_trajectories
@@ -13,6 +14,7 @@ from simuran.bridges.allen_vbn_bridge import AllenVBNBridge
 from simuran.plot.figure import SimuranFigure
 from simuran.loaders.allen_loader import BaseAllenLoader
 from simuran import set_only_log_to_file
+from simuran.analysis.unit import bin_spike_train
 
 module_logger = logging.getLogger("simuran.custom.gpfa")
 
@@ -56,29 +58,34 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     out_dir.mkdir(parents=True, exist_ok=True)
     unit_table.to_csv(
         out_dir
-        / name_from_recording(
-            recording, f"unit_table_{regions_as_str}.csv", rel_dir=rel_dir
-        )
+        / name_from_recording(recording, f"unit_table_{regions_as_str}.csv", rel_dir)
     )
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
     )
-    # try:
-    gpfa_result, trajectories = elephant_gpfa(per_trial_spikes, gpfa_window, num_dim=3)
-    scikit_fa_result, fa_trajectories = scikit_fa(per_trial_spikes, n_components=3)
-    # except ValueError:
-    #     module_logger.warning(
-    #         "Not enough spikes for GPFA for {}".format(recording.get_name_for_save())
-    #     )
-    #     return None
+    # binned = []
+    # for trial in per_trial_spikes:
+    #     binned_spikes = bin_spike_train(trial, 0.02, t_stop=gpfa_window)
+    #     binned.append(binned_spikes)
+    # binned_spikes = np.array(binned)
+    try:
+        gpfa_result, trajectories = elephant_gpfa(
+            per_trial_spikes, gpfa_window, num_dim=3
+        )
+    # scikit_fa_result, fa_trajectories = scikit_fa(binned_spikes, n_components=3)
+    except ValueError:
+        module_logger.warning(
+            "Not enough spikes for GPFA for {}".format(recording.get_name_for_save())
+        )
+        return None
     correct, incorrect = split_trajectories(trajectories, trial_info["trial_correct"])
-    fa_correct, fa_incorrect = split_trajectories(
-        fa_trajectories, trial_info["trial_correct"]
-    )
+    # fa_correct, fa_incorrect = split_trajectories(
+    #     fa_trajectories, trial_info["trial_correct"]
+    # )
 
     info = {
         "elephant": {"correct": correct, "incorrect": incorrect},
-        "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
+        # "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir)
     with open(out_dir / f"gpfa_{regions_as_str}.txt") as f:
@@ -137,8 +144,10 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         brain_regions = config["ibl_brain_regions"]
         n = "ibl"
     for i, recording in enumerate(recording_container):
-        output_dir = config["output_dir"] / recording.get_name_for_save(
-            rel_dir=rel_dir_path
+        output_dir = (
+            config["output_dir"]
+            / "gpfa"
+            / recording.get_name_for_save(rel_dir=config[rel_dir_path])
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
         if info is None or overwrite:
@@ -195,6 +204,6 @@ if __name__ == "__main__":
         use_snakemake = True
     if use_snakemake:
         set_only_log_to_file(snakemake.log[0])
-        main(snakemake.config, snakemake.input[0], snakemake.params.overwrite)
+        main(snakemake.config, Path(snakemake.input[0]).parent, snakemake.params.overwrite)
     else:
         main(None, r"G:/OpenData/OpenDataResults/tables/ibl_brain_regions.csv", False)
