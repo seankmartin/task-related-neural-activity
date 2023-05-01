@@ -26,7 +26,10 @@ def name_from_recording(recording, filename, rel_dir=None):
 def regions_to_string(brain_regions):
     s = ""
     for r in brain_regions:
-        s += r + "_"
+        if isinstance(r, str):
+            s += r + "_"
+        else:
+            s += "_".join(r) + "_"
     return s[:-1].replace("/", "-")
 
 
@@ -45,7 +48,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
     unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
-    if len(unit_table) == 0:
+    if len(unit_table) < 10:
         return None
     regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)
@@ -60,16 +63,14 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
     )
-    try:
-        gpfa_result, trajectories = elephant_gpfa(
-            per_trial_spikes, gpfa_window, num_dim=3
-        )
-        scikit_fa_result, fa_trajectories = scikit_fa(per_trial_spikes, n_components=3)
-    except ValueError:
-        module_logger.warning(
-            "Not enough spikes for GPFA for {}".format(recording.get_name_for_save())
-        )
-        return None
+    # try:
+    gpfa_result, trajectories = elephant_gpfa(per_trial_spikes, gpfa_window, num_dim=3)
+    scikit_fa_result, fa_trajectories = scikit_fa(per_trial_spikes, n_components=3)
+    # except ValueError:
+    #     module_logger.warning(
+    #         "Not enough spikes for GPFA for {}".format(recording.get_name_for_save())
+    #     )
+    #     return None
     correct, incorrect = split_trajectories(trajectories, trial_info["trial_correct"])
     fa_correct, fa_incorrect = split_trajectories(
         fa_trajectories, trial_info["trial_correct"]
@@ -117,65 +118,72 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
         fig.save()
 
 
-def analyse_container(overwrite, config, recording_container):
+def analyse_container(overwrite, config, recording_container, brain_regions):
     is_allen = isinstance(recording_container[0].loader, BaseAllenLoader)
+    br_str = regions_to_string(brain_regions)
+    regions = []
+    for region in brain_regions:
+        if isinstance(region, str):
+            regions.append(region)
+        else:
+            for sub_region in region:
+                regions.append(sub_region)
     if is_allen:
         rel_dir_path = "allen_data_dir"
         brain_regions = config["allen_brain_regions"]
+        n = "allen"
     else:
         rel_dir_path = "ibl_data_dir"
         brain_regions = config["ibl_brain_regions"]
+        n = "ibl"
     for i, recording in enumerate(recording_container):
         output_dir = config["output_dir"] / recording.get_name_for_save(
             rel_dir=rel_dir_path
         )
-        for rege in brain_regions:
-            regions = []
-            for region in rege:
-                if isinstance(region, str):
-                    regions.append(region)
-                else:
-                    for sub_region in region:
-                        regions.append(sub_region)
-            print(f"Working on {regions}")
-            info = load_data(
-                recording, output_dir, regions, rel_dir=config[rel_dir_path]
+        info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
+        if info is None or overwrite:
+            recording = recording_container.load(i)
+            info = analyse_single_recording(
+                recording,
+                config["gpfa_window"],
+                output_dir,
+                config[rel_dir_path],
+                regions,
             )
-            if info is None or overwrite:
-                recording = recording_container.load(i)
-                info = analyse_single_recording(
-                    recording,
-                    config["gpfa_window"],
-                    output_dir,
-                    config[rel_dir_path],
-                    regions,
-                )
-            if info is not None:
-                plot_data(
-                    recording, info, output_dir, regions, rel_dir=config[rel_dir_path]
-                )
+        if info is not None:
+            plot_data(
+                recording, info, output_dir, regions, rel_dir=config[rel_dir_path]
+            )
 
 
 def main(main_config, brain_table_location, overwrite=False):
     config = load_config(config=main_config)
     brain_table = pd.read_csv(brain_table_location)
-    allen_recording_container, allen_loader = load_allen(
-        config["allen_data_dir"],
-        config["allen_manifest"],
-        config["allen_brain_regions"],
-    )
-    print(
-        f"Loaded {len(allen_recording_container)} recordings from Allen with brain regions {config['allen_brain_regions']}"
-    )
-    ibl_recording_container, ibl_loader = load_ibl(
-        config["ibl_data_dir"], brain_table, config["ibl_brain_regions"]
-    )
-    print(
-        f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
-    )
-
-    analyse_container(overwrite, config, ibl_recording_container)
-    analyse_container(overwrite, config, allen_recording_container)
+    for brain_region_pair in config["allen_brain_regions"]:
+        allen_recording_container, allen_loader = load_allen(
+            config["allen_data_dir"], config["allen_manifest"], brain_region_pair
+        )
+        print(
+            f"Loaded {len(allen_recording_container)} recordings from Allen with brain regions {brain_region_pair}"
+        )
+        analyse_container(
+            overwrite, config, allen_recording_container, brain_region_pair
+        )
+        for brain_region in brain_region_pair:
+            analyse_container(
+                overwrite=overwrite,
+                config=config,
+                recording_container=allen_recording_container,
+                brain_regions=brain_region,
+            )
+    for brain_region_pair in config["ibl_brain_regions"]:
+        ibl_recording_container, ibl_loader = load_ibl(
+            config["ibl_data_dir"], brain_table, config["ibl_brain_regions"]
+        )
+        print(
+            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
+        )
+        analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
 
 
 if __name__ == "__main__":
