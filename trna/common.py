@@ -3,6 +3,22 @@ from pathlib import Path
 from simuran import ParamHandler
 
 
+def name_from_recording(recording, filename, rel_dir=None):
+    name = recording.get_name_for_save(rel_dir=rel_dir)
+    name = name + "--" + filename
+    return name
+
+
+def regions_to_string(brain_regions):
+    s = ""
+    for r in brain_regions:
+        if isinstance(r, str):
+            s += r + "_"
+        else:
+            s += "_".join(r) + "_"
+    return s[:-1].replace("/", "-")
+
+
 def split_spikes_into_trials(
     spike_train, trial_start_ends, end_time=None, num_trials=None, delay=0
 ):

@@ -67,18 +67,20 @@ def simple_trajectory_plot(correct, incorrect):
     return fig
 
 
-def plot_cca_correlation(correct, incorrect):
+def plot_cca_correlation(recording_info):
     list_info = []
-    for trial in correct:
-        delay = trial[0]
-        cca = trial[1]
-        correlation = np.corrcoef(cca[0], cca[1])[0, 1]
-        list_info.append([delay, correlation, "Correct"])
-    for trial in incorrect:
-        delay = trial[0]
-        cca = trial[1]
-        correlation = np.corrcoef(cca[0], cca[1])[0, 1]
-        list_info.append([delay, correlation, "Incorrect"])
+    for tu in recording_info:
+        correct, incorrect = tu["scikit"]
+        for trial in correct:
+            delay = trial[0]
+            cca = trial[1]
+            correlation = np.corrcoef(cca[0], cca[1])[0, 1]
+            list_info.append([delay, correlation, "Correct"])
+        for trial in incorrect:
+            delay = trial[0]
+            cca = trial[1]
+            correlation = np.corrcoef(cca[0], cca[1])[0, 1]
+            list_info.append([delay, correlation, "Incorrect"])
     df = pd.DataFrame(
         list_info, columns=["Delay", "Population correlation", "Trial result"]
     )
@@ -86,6 +88,49 @@ def plot_cca_correlation(correct, incorrect):
     smr.set_plot_style()
     fig, ax = plt.subplots()
     sns.lineplot(
+        df,
+        x="Delay",
+        y="Population correlation",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax,
+    )
+
+    smr.despine()
+    return fig
+
+
+def plot_cca_correlation_features(correct, incorrect, brain_regions):
+    br1, br2 = brain_regions
+    if isinstance(br2, list):
+        br2 = br2[0][:-1]
+    list_info = []
+    for trial in correct:
+        delay = trial[0]
+        if delay != 0:
+            continue
+        cca = trial[1]
+        for val1, val2 in zip(cca[0], cca[1]):
+            list_info.append([val1, val2, "Correct"])
+    for trial in incorrect:
+        delay = trial[0]
+        if delay != 0:
+            continue
+        cca = trial[1]
+        for val1, val2 in zip(cca[0], cca[1]):
+            list_info.append([val1, val2, "Incorrect"])
+    df = pd.DataFrame(
+        list_info,
+        columns=[
+            f"{br1} canonical dimension",
+            f"{br2} canonical dimension",
+            "Trial result",
+        ],
+    )
+
+    smr.set_plot_style()
+    fig, ax = plt.subplots()
+    sns.scatterplot(
         df,
         x="Delay",
         y="Population correlation",

@@ -1,38 +1,21 @@
 import logging
 import pickle
-import numpy as np
 
 import pandas as pd
 from trna.common import load_config, split_spikes_into_trials, split_trajectories
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.dimension_reduction import elephant_gpfa, scikit_fa
+from trna.dimension_reduction import elephant_gpfa
 from trna.plot import simple_trajectory_plot
+from trna.common import regions_to_string, name_from_recording
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
 from simuran.bridges.allen_vbn_bridge import AllenVBNBridge
 from simuran.plot.figure import SimuranFigure
 from simuran.loaders.allen_loader import BaseAllenLoader
 from simuran import set_only_log_to_file
-from simuran.analysis.unit import bin_spike_train
 
 module_logger = logging.getLogger("simuran.custom.gpfa")
-
-
-def name_from_recording(recording, filename, rel_dir=None):
-    name = recording.get_name_for_save(rel_dir=rel_dir)
-    name = name + "--" + filename
-    return name
-
-
-def regions_to_string(brain_regions):
-    s = ""
-    for r in brain_regions:
-        if isinstance(r, str):
-            s += r + "_"
-        else:
-            s += "_".join(r) + "_"
-    return s[:-1].replace("/", "-")
 
 
 def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
@@ -127,7 +110,6 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
     is_allen = isinstance(recording_container[0].loader, BaseAllenLoader)
-    br_str = regions_to_string(brain_regions)
     regions = []
     for region in brain_regions:
         if isinstance(region, str):
@@ -138,11 +120,9 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     if is_allen:
         rel_dir_path = "allen_data_dir"
         brain_regions = config["allen_brain_regions"]
-        n = "allen"
     else:
         rel_dir_path = "ibl_data_dir"
         brain_regions = config["ibl_brain_regions"]
-        n = "ibl"
     for i, recording in enumerate(recording_container):
         output_dir = (
             config["output_dir"]
@@ -187,7 +167,7 @@ def main(main_config, brain_table_location, overwrite=False):
             )
     for brain_region_pair in config["ibl_brain_regions"]:
         ibl_recording_container, ibl_loader = load_ibl(
-            config["ibl_data_dir"], brain_table, config["ibl_brain_regions"]
+            config["ibl_data_dir"], brain_table, brain_region_pair
         )
         print(
             f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
@@ -204,6 +184,10 @@ if __name__ == "__main__":
         use_snakemake = True
     if use_snakemake:
         set_only_log_to_file(snakemake.log[0])
-        main(snakemake.config, Path(snakemake.input[0]).parent, snakemake.params.overwrite)
+        main(
+            snakemake.config,
+            Path(snakemake.input[0]).parent,
+            snakemake.params.overwrite,
+        )
     else:
         main(None, r"G:/OpenData/OpenDataResults/tables/ibl_brain_regions.csv", False)

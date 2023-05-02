@@ -7,7 +7,8 @@ from trna.common import load_config, split_spikes_into_trials
 from trna.allen import load_allen
 from trna.ibl import load_ibl
 from trna.dimension_reduction import scikit_cca
-from trna.plot import plot_cca_correlation
+from trna.plot import plot_cca_correlation, plot_cca_correlation_features
+from trna.common import regions_to_string, name_from_recording
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
 from simuran.bridges.allen_vbn_bridge import AllenVBNBridge
@@ -17,22 +18,6 @@ from simuran import set_only_log_to_file
 from simuran.analysis.unit import bin_spike_train
 
 module_logger = logging.getLogger("simuran.custom.cca")
-
-
-def name_from_recording(recording, filename, rel_dir=None):
-    name = recording.get_name_for_save(rel_dir=rel_dir)
-    name = name + "--" + filename
-    return name
-
-
-def regions_to_string(brain_regions):
-    s = ""
-    for r in brain_regions:
-        if isinstance(r, str):
-            s += r + "_"
-        else:
-            s += "_".join(r) + "_"
-    return s[:-1].replace("/", "-")
 
 
 def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
@@ -120,7 +105,7 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
     for key, value in info.items():
         correct = value["correct"]
         incorrect = value["incorrect"]
-        fig = plot_cca_correlation(correct, incorrect)
+        fig = plot_cca_correlation_features(correct, incorrect, brain_regions)
         out_name = name_from_recording(
             recording, f"cca_{key}_{regions_as_str}.png", rel_dir=rel_dir
         )
@@ -130,7 +115,6 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
     is_allen = isinstance(recording_container[0].loader, BaseAllenLoader)
-    br_str = regions_to_string(brain_regions)
     regions = []
     for region in brain_regions:
         if isinstance(region, str):
@@ -141,14 +125,14 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     if is_allen:
         rel_dir_path = "allen_data_dir"
         brain_regions = config["allen_brain_regions"]
-        n = "allen"
     else:
         rel_dir_path = "ibl_data_dir"
         brain_regions = config["ibl_brain_regions"]
-        n = "ibl"
     for i, recording in enumerate(recording_container):
-        output_dir = config["output_dir"] / recording.get_name_for_save(
-            rel_dir=rel_dir_path
+        output_dir = (
+            config["output_dir"]
+            / "cca"
+            / recording.get_name_for_save(rel_dir=rel_dir_path)
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
         if info is None or overwrite:
@@ -164,12 +148,24 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             plot_data(
                 recording, info, output_dir, regions, rel_dir=config[rel_dir_path]
             )
+    all_info = []
+    for i, recording in enumerate(recording_container):
+        output_dir = (
+            config["output_dir"]
+            / "cca"
+            / recording.get_name_for_save(rel_dir=rel_dir_path)
+        )
+        info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
+        all_info.append(info)
+    fig = plot_cca_correlation(all_info)
+    sm_fig = SimuranFigure(fig, str(output_dir / "cca_correlation.png"))
+    sm_fig.save()
 
 
 def main(main_config, brain_table_location, overwrite=False):
     config = load_config(config=main_config)
     brain_table = pd.read_csv(brain_table_location)
-    for brain_region_pair in config["allen_brain_regions"]:
+    for brain_region_pair in config["allen_cca_regions"]:
         allen_recording_container, allen_loader = load_allen(
             config["allen_data_dir"], config["allen_manifest"], brain_region_pair
         )
@@ -186,9 +182,9 @@ def main(main_config, brain_table_location, overwrite=False):
                 recording_container=allen_recording_container,
                 brain_regions=brain_region,
             )
-    for brain_region_pair in config["ibl_brain_regions"]:
+    for brain_region_pair in config["ibl_cca_regions"]:
         ibl_recording_container, ibl_loader = load_ibl(
-            config["ibl_data_dir"], brain_table, config["ibl_brain_regions"]
+            config["ibl_data_dir"], brain_table, brain_region_pair
         )
         print(
             f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"

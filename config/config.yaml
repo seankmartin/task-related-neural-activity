@@ -15,3 +15,12 @@ ibl_brain_regions:
       ["VISl1", "VISl2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"],
     ],
   ]
+allen_cca_regions:
+  [["CA1", "SUB"], ["CA1", "TH"], ["SUB", "TH"], ["VISp", "LGv"]]
+ibl_cca_regions:
+  [
+    ["CA1", "SUB"],
+    ["CA1", "TH"],
+    ["SUB", "TH"],
+    [["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"], "LGv"],
+  ]
