@@ -98,4 +98,4 @@ def scikit_cca(trial_rates1, trial_rates2, n_components=1):
     cca = CCA(n_components=n_components)
     X, Y = cca.fit_transform(trial_rates1, trial_rates2)
 
-    return cca, [X, Y]
+    return cca, X, Y

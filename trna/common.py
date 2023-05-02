@@ -4,7 +4,7 @@ from simuran import ParamHandler
 
 
 def split_spikes_into_trials(
-    spike_train, trial_start_ends, end_time=None, num_trials=None
+    spike_train, trial_start_ends, end_time=None, num_trials=None, delay=0
 ):
     """
     Split the spike train into trials.
@@ -36,9 +36,13 @@ def split_spikes_into_trials(
     for i, (start, end) in enumerate(trial_start_ends):
         if (num_trials is not None) and (i == num_trials):
             break
+        start_time = start + delay
+        end_time_final = start + end_time + delay
+        if start_time < 0:
+            start_time = start
         trial_spike_train = []
         for k, v in spike_train.items():
-            to_use = v[(v >= start) & (v <= start + end_time)]
+            to_use = v[(v >= start_time) & (v <= end_time_final)]
             trial_spike_train.append(to_use - start)
         new_spike_train.append(trial_spike_train)
     return new_spike_train

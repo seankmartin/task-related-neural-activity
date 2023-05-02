@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import simuran as smr
 
 
 def simple_trajectory_plot(correct, incorrect):
@@ -21,6 +24,7 @@ def simple_trajectory_plot(correct, incorrect):
     average_trajectory_pass = np.mean(correct, axis=0)
     average_trajectory_fail = np.mean(incorrect, axis=0)
 
+    smr.set_plot_style()
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
 
@@ -58,5 +62,37 @@ def simple_trajectory_plot(correct, incorrect):
         color="red",
     )
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0.0)
+    smr.despine()
 
+    return fig
+
+
+def plot_cca_correlation(correct, incorrect):
+    list_info = []
+    for trial in correct:
+        delay = trial[0]
+        cca = trial[1]
+        correlation = np.corrcoef(cca[0], cca[1])[0, 1]
+        list_info.append([delay, correlation, "Correct"])
+    for trial in incorrect:
+        delay = trial[0]
+        cca = trial[1]
+        correlation = np.corrcoef(cca[0], cca[1])[0, 1]
+        list_info.append([delay, correlation, "Incorrect"])
+    df = pd.DataFrame(
+        list_info, columns=["Delay", "Population correlation", "Trial result"]
+    )
+
+    smr.set_plot_style()
+    fig, ax = plt.subplots()
+    sns.lineplot(
+        df,
+        x="Delay",
+        y="Population correlation",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax,
+    )
+
+    smr.despine()
     return fig

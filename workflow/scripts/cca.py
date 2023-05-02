@@ -1,18 +1,20 @@
 import logging
 import pickle
+import numpy as np
 
 import pandas as pd
-from trna.common import load_config, split_spikes_into_trials, split_trajectories
+from trna.common import load_config, split_spikes_into_trials
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.dimension_reduction import elephant_gpfa, scikit_fa
-from trna.plot import simple_trajectory_plot
+from trna.dimension_reduction import scikit_cca
+from trna.plot import plot_cca_correlation
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
 from simuran.bridges.allen_vbn_bridge import AllenVBNBridge
 from simuran.plot.figure import SimuranFigure
 from simuran.loaders.allen_loader import BaseAllenLoader
 from simuran import set_only_log_to_file
+from simuran.analysis.unit import bin_spike_train
 
 module_logger = logging.getLogger("simuran.custom.cca")
 
@@ -36,7 +38,7 @@ def regions_to_string(brain_regions):
 def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
     regions_as_str = regions_to_string(regions)
-    save_name = out_dir / "pickles" / (name + regions_as_str + "_gpfa" + ".pkl")
+    save_name = out_dir / "pickles" / (name + regions_as_str + "_cca" + ".pkl")
     save_name.parent.mkdir(parents=True, exist_ok=True)
     with open(save_name, "wb") as f:
         pickle.dump(info, f)
@@ -47,7 +49,10 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
-    unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
+    region1, region2 = brain_regions
+    unit_table1, spike_train1 = bridge.spike_train(recording, brain_regions=[region1])
+    unit_table2, spike_train2 = bridge.spike_train(recording, brain_regions=[region2])
+    unit_table = pd.concat([unit_table1, unit_table2])
     if len(unit_table) < 10:
         return None
     regions_as_str = regions_to_string(brain_regions)
@@ -60,28 +65,33 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
             recording, f"unit_table_{regions_as_str}.csv", rel_dir=rel_dir
         )
     )
-    per_trial_spikes = split_spikes_into_trials(
-        spike_train, trial_info["trial_times"], end_time=gpfa_window
-    )
-    # try:
-    gpfa_result, trajectories = elephant_gpfa(per_trial_spikes, gpfa_window, num_dim=3)
-    scikit_fa_result, fa_trajectories = scikit_fa(per_trial_spikes, n_components=3)
-    # except ValueError:
-    #     module_logger.warning(
-    #         "Not enough spikes for GPFA for {}".format(recording.get_name_for_save())
-    #     )
-    #     return None
-    correct, incorrect = split_trajectories(trajectories, trial_info["trial_correct"])
-    fa_correct, fa_incorrect = split_trajectories(
-        fa_trajectories, trial_info["trial_correct"]
-    )
+    for t in range(-20, 21, 2):
+        per_trial_spikes1 = split_spikes_into_trials(
+            spike_train1, trial_info["trial_times"], end_time=gpfa_window
+        )
+        per_trial_spikes2 = split_spikes_into_trials(
+            spike_train2, trial_info["trial_times"], end_time=gpfa_window, delay=t
+        )
+        correct = []
+        incorrect = []
+        for trial1, trial2, correct_ in zip(
+            per_trial_spikes1, per_trial_spikes2, trial_info["trial_correct"]
+        ):
+            binned_spikes1 = bin_spike_train(trial1, 0.02, t_stop=gpfa_window)
+            binned_spikes2 = bin_spike_train(trial2, 0.02, t_stop=gpfa_window)
+            cca, X, Y = scikit_cca(binned_spikes1, binned_spikes2)
+            if correct_:
+                correct.append([t, [X, Y]])
+            else:
+                incorrect.append([t, [X, Y]])
+        correct = np.array(correct)
+        incorrect = np.array(incorrect)
 
     info = {
-        "elephant": {"correct": correct, "incorrect": incorrect},
-        "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
+        "scikit": {"correct": correct, "incorrect": incorrect},
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir)
-    with open(out_dir / f"gpfa_{regions_as_str}.txt") as f:
+    with open(out_dir / f"cca_{regions_as_str}.txt") as f:
         f.write(
             "Finished analysing: "
             + recording.get_name_for_save(rel_dir)
@@ -93,7 +103,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
 def load_data(recording, out_dir, regions, rel_dir=None):
     name = recording.get_name_for_save(rel_dir=rel_dir)
     regions_as_str = regions_to_string(regions)
-    save_name = out_dir / "pickles" / (name + regions_as_str + "_gpfa" + ".pkl")
+    save_name = out_dir / "pickles" / (name + regions_as_str + "_cca" + ".pkl")
     if save_name.exists():
         print(
             "Loading pickle data for: " + recording.get_name_for_save(rel_dir=rel_dir)
@@ -110,9 +120,9 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
     for key, value in info.items():
         correct = value["correct"]
         incorrect = value["incorrect"]
-        fig = simple_trajectory_plot(correct, incorrect)
+        fig = plot_cca_correlation(correct, incorrect)
         out_name = name_from_recording(
-            recording, f"gpfa_{key}_{regions_as_str}.png", rel_dir=rel_dir
+            recording, f"cca_{key}_{regions_as_str}.png", rel_dir=rel_dir
         )
         fig = SimuranFigure(fig, str(out_dir / out_name))
         fig.save()
