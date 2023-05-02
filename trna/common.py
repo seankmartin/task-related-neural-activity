@@ -1,6 +1,31 @@
+import pickle
 import numpy as np
 from pathlib import Path
 from simuran import ParamHandler
+
+
+def save_info_to_file(info, recording, out_dir, regions, rel_dir=None, bit="gpfa"):
+    name = recording.get_name_for_save(rel_dir=rel_dir)
+    regions_as_str = regions_to_string(regions)
+    save_name = out_dir / "pickles" / (name + regions_as_str + f"_{bit}" + ".pkl")
+    save_name.parent.mkdir(parents=True, exist_ok=True)
+    with open(save_name, "wb") as f:
+        pickle.dump(info, f)
+
+
+def load_data(recording, out_dir, regions, rel_dir=None, bit="gpfa"):
+    name = recording.get_name_for_save(rel_dir=rel_dir)
+    regions_as_str = regions_to_string(regions)
+    save_name = out_dir / "pickles" / (name + regions_as_str + f"_{bit}" + ".pkl")
+    if save_name.exists():
+        print(
+            "Loading pickle data for: " + recording.get_name_for_save(rel_dir=rel_dir)
+        )
+        with open(save_name, "rb") as f:
+            info = pickle.load(f)
+        return info
+    else:
+        return None
 
 
 def name_from_recording(recording, filename, rel_dir=None):

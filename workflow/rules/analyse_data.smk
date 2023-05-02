@@ -2,14 +2,25 @@ rule analyse_gpfa:
     input:
         f"{config['local_dir']}/OpenDataResults/tables/ibl_brain_regions.csv"
     output:
-        directory(f"{config['local_dir']}/OpenDataResults/gpfa/TODO")
+        f"{config['local_dir']}/OpenDataResults/gpfa/png/gpfa_variance_CA1_SUB_allen.png"
     params:
         overwrite = False
     log:
         f"{config['local_dir']}/OpenDataResults/logs/gpfa.log"
     script:
         "../scripts/gpfa.py"
-        
+
+rule analyse_cca:
+    input:
+        f"{config['local_dir']}/OpenDataResults/tables/ibl_brain_regions.csv"
+    output:
+        f"{config['local_dir']}/OpenDataResults/cca/png/allen_CA1_SUB_cca_correlation.png"
+    params:
+        overwrite = False
+    log:
+        f"{config['local_dir']}/OpenDataResults/logs/gpfa.log"
+    script:
+        "../scripts/cca.py"       
 rule plot_units:
     input:
         f"{config['local_dir']}/OpenDataResults/tables/ibl_brain_regions.csv"

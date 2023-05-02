@@ -67,6 +67,81 @@ def simple_trajectory_plot(correct, incorrect):
     return fig
 
 
+def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
+    """
+    Plot the distance between the average trajectory for correct and incorrect
+    trials.
+
+    Parameters:
+    -----------
+    correct: np.ndarray
+        The trajectories of the neurons with GPFA applied for correct trials.
+    incorrect: np.ndarray
+        The trajectories of the neurons with GPFA applied for incorrect trials.
+
+    Returns:
+    --------
+    figure: matplotlib.figure.Figure
+
+    """
+    list_info = []
+    l2_info = []
+    for tu in recording_info:
+        correct, incorrect = tu["elephant"]
+        average_trajectory_pass = np.mean(correct, axis=0)
+        average_trajectory_fail = np.mean(incorrect, axis=0)
+
+        distance = np.linalg.norm(
+            average_trajectory_pass - average_trajectory_fail, axis=0
+        )
+        starting_distance = np.linalg.norm(
+            average_trajectory_pass[:, 0] - average_trajectory_fail[:, 0]
+        )
+        ending_distance = np.linalg.norm(
+            average_trajectory_pass[:, -1] - average_trajectory_fail[:, -1]
+        )
+        correct_variance = np.var(correct, axis=0)
+        incorrect_variance = np.var(incorrect, axis=0)
+        list_info.append(
+            [
+                distance,
+                starting_distance,
+                ending_distance,
+            ]
+        )
+        l2_info.append([correct_variance, "Correct"])
+        l2_info.append([incorrect_variance, "Incorrect"])
+
+    df = pd.DataFrame(
+        list_info,
+        columns=[
+            "Trajectory distance",
+            "Start distance",
+            "End distance",
+        ],
+    )
+    df2 = pd.DataFrame(l2_info, columns=["Variance", "Trial result"])
+    smr.set_plot_style()
+
+    for x in ["Trajectory distance", "Start distance", "End distance"]:
+        fig, ax = plt.subplots()
+        sns.histplot(df, x=x, ax=ax, kde=True)
+        filename = str(
+            out_dir
+            / f"gpfa_distance_{x.lower().replace(' ', '_')}_{brain_regions}_{t}.png"
+        )
+        smr_fig = smr.SimuranFigure(fig, filename)
+        smr_fig.save()
+        smr.despine()
+
+    fig, ax = plt.subplots()
+    sns.histplot(df2, x="Variance", hue="Trial result", kde=True, ax=ax)
+    smr.despine()
+    filename = str(out_dir / f"gpfa_variance_{brain_regions}_{t}.png")
+    fig = smr.SimuranFigure(fig, filename)
+    fig.save()
+
+
 def plot_cca_correlation(recording_info):
     list_info = []
     for tu in recording_info:

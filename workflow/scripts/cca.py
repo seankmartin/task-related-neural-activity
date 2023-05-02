@@ -8,7 +8,12 @@ from trna.allen import load_allen
 from trna.ibl import load_ibl
 from trna.dimension_reduction import scikit_cca
 from trna.plot import plot_cca_correlation, plot_cca_correlation_features
-from trna.common import regions_to_string, name_from_recording
+from trna.common import (
+    regions_to_string,
+    name_from_recording,
+    load_data,
+    save_info_to_file,
+)
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
 from simuran.bridges.allen_vbn_bridge import AllenVBNBridge
@@ -18,15 +23,6 @@ from simuran import set_only_log_to_file
 from simuran.analysis.unit import bin_spike_train
 
 module_logger = logging.getLogger("simuran.custom.cca")
-
-
-def save_info_to_file(info, recording, out_dir, regions, rel_dir=None):
-    name = recording.get_name_for_save(rel_dir=rel_dir)
-    regions_as_str = regions_to_string(regions)
-    save_name = out_dir / "pickles" / (name + regions_as_str + "_cca" + ".pkl")
-    save_name.parent.mkdir(parents=True, exist_ok=True)
-    with open(save_name, "wb") as f:
-        pickle.dump(info, f)
 
 
 def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_regions):
@@ -75,7 +71,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     info = {
         "scikit": {"correct": correct, "incorrect": incorrect},
     }
-    save_info_to_file(info, recording, out_dir, brain_regions, rel_dir)
+    save_info_to_file(info, recording, out_dir, brain_regions, rel_dir, bit="cca")
     with open(out_dir / f"cca_{regions_as_str}.txt") as f:
         f.write(
             "Finished analysing: "
@@ -83,21 +79,6 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
             + f" with {len(correct)} correct and {len(incorrect)} incorrect trials and {len(unit_table)} units"
         )
     return info
-
-
-def load_data(recording, out_dir, regions, rel_dir=None):
-    name = recording.get_name_for_save(rel_dir=rel_dir)
-    regions_as_str = regions_to_string(regions)
-    save_name = out_dir / "pickles" / (name + regions_as_str + "_cca" + ".pkl")
-    if save_name.exists():
-        print(
-            "Loading pickle data for: " + recording.get_name_for_save(rel_dir=rel_dir)
-        )
-        with open(save_name, "rb") as f:
-            info = pickle.load(f)
-        return info
-    else:
-        return None
 
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
@@ -125,16 +106,20 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     if is_allen:
         rel_dir_path = "allen_data_dir"
         brain_regions = config["allen_brain_regions"]
+        n = "allen"
     else:
         rel_dir_path = "ibl_data_dir"
         brain_regions = config["ibl_brain_regions"]
+        n = "ibl"
     for i, recording in enumerate(recording_container):
         output_dir = (
             config["output_dir"]
             / "cca"
             / recording.get_name_for_save(rel_dir=rel_dir_path)
         )
-        info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
+        info = load_data(
+            recording, output_dir, regions, rel_dir=config[rel_dir_path], bit="cca"
+        )
         if info is None or overwrite:
             recording = recording_container.load(i)
             info = analyse_single_recording(
@@ -158,7 +143,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
         all_info.append(info)
     fig = plot_cca_correlation(all_info)
-    sm_fig = SimuranFigure(fig, str(output_dir / "cca_correlation.png"))
+    regions = regions_to_string(brain_regions)
+    sm_fig = SimuranFigure(fig, str(output_dir / f"{n}_{regions}_cca_correlation.png"))
     sm_fig.save()
 
 
