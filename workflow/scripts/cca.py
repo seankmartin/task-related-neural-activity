@@ -1,5 +1,4 @@
 import logging
-import pickle
 import numpy as np
 
 import pandas as pd
@@ -72,7 +71,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
         "scikit": {"correct": correct, "incorrect": incorrect},
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir, bit="cca")
-    with open(out_dir / f"cca_{regions_as_str}.txt") as f:
+    with open(out_dir / f"cca_{regions_as_str}.txt", "w") as f:
         f.write(
             "Finished analysing: "
             + recording.get_name_for_save(rel_dir)
@@ -141,8 +140,10 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             / recording.get_name_for_save(rel_dir=rel_dir_path)
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
-        all_info.append(info)
-    fig = plot_cca_correlation(all_info)
+        if info is not None:
+            all_info.append(info)
+    output_dir = config["output_dir"] / "cca"
+    fig = plot_cca_correlation(all_info, output_dir)
     regions = regions_to_string(brain_regions)
     sm_fig = SimuranFigure(fig, str(output_dir / f"{n}_{regions}_cca_correlation.png"))
     sm_fig.save()

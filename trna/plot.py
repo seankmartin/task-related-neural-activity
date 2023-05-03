@@ -142,7 +142,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     fig.save()
 
 
-def plot_cca_correlation(recording_info):
+def plot_cca_correlation(recording_info, out_dir):
     list_info = []
     for tu in recording_info:
         correct, incorrect = tu["scikit"]
@@ -159,6 +159,7 @@ def plot_cca_correlation(recording_info):
     df = pd.DataFrame(
         list_info, columns=["Delay", "Population correlation", "Trial result"]
     )
+    df.to_csv(out_dir / "cca_correlation.csv", index=False)
 
     smr.set_plot_style()
     fig, ax = plt.subplots()

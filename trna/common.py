@@ -19,7 +19,9 @@ def load_data(recording, out_dir, regions, rel_dir=None, bit="gpfa"):
     save_name = out_dir / "pickles" / (name + regions_as_str + f"_{bit}" + ".pkl")
     if save_name.exists():
         print(
-            "Loading pickle data for: " + recording.get_name_for_save(rel_dir=rel_dir)
+            "Loading pickle data for: "
+            + recording.get_name_for_save(rel_dir=rel_dir)
+            + regions_as_str
         )
         with open(save_name, "rb") as f:
             info = pickle.load(f)

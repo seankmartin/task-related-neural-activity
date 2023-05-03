@@ -1,5 +1,4 @@
 import logging
-import pickle
 
 import pandas as pd
 from trna.common import load_config, split_spikes_into_trials, split_trajectories
@@ -67,7 +66,7 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
         # "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir, bit="gpfa")
-    with open(out_dir / f"gpfa_{regions_as_str}.txt") as f:
+    with open(out_dir / f"gpfa_{regions_as_str}.txt", "w") as f:
         f.write(
             "Finished analysing: "
             + recording.get_name_for_save(rel_dir)
@@ -136,8 +135,9 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             / recording.get_name_for_save(rel_dir=rel_dir_path)
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
-        all_info.append(info)
-    output_dir = config["output_dir"] / "cca"
+        if info is not None:
+            all_info.append(info)
+    output_dir = config["output_dir"] / "gpfa"
     regions_str = regions_to_string(brain_regions)
     plot_gpfa_distance(all_info, output_dir, regions_str, n)
 
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         set_only_log_to_file(snakemake.log[0])
         main(
             snakemake.config,
-            Path(snakemake.input[0]).parent,
+            snakemake.input[0],
             snakemake.params.overwrite,
         )
     else:
