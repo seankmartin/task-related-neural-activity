@@ -46,6 +46,38 @@ def regions_to_string(brain_regions):
     return s[:-1].replace("/", "-")
 
 
+def ensure_enough_units(unit_table, min_num_units):
+    if len(unit_table) < min_num_units:
+        has_enough = False
+    brain_regions = unit_table["brain_region"].unique()
+    for region in brain_regions:
+        if len(unit_table[unit_table["brain_region"] == region]) < min_num_units:
+            has_enough = False
+            break
+    return has_enough
+
+
+def decimate_train_to_min(unit_table, spike_train, threshold):
+    brain_regions = unit_table["brain_region"].unique()
+    new_spike_train = {}
+    new_unit_table = unit_table.copy()
+    for region in brain_regions:
+        region_units = unit_table[unit_table["brain_region"] == region]
+        if len(region_units) > threshold:
+            random_units = np.random.choice(range(len(region_units)), threshold)
+            for i in random_units:
+                new_spike_train[region_units.iloc[i].index] = spike_train[
+                    region_units.iloc[i].index
+                ]
+        else:
+            for i in range(len(region_units)):
+                new_spike_train[region_units.iloc[i].index] = spike_train[
+                    region_units.iloc[i].index
+                ]
+    new_unit_table = new_unit_table.loc[new_spike_train.keys()]
+    return new_spike_train
+
+
 def split_spikes_into_trials(
     spike_train, trial_start_ends, end_time=None, num_trials=None, delay=0
 ):

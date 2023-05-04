@@ -1,7 +1,12 @@
 import logging
 
 import pandas as pd
-from trna.common import load_config, split_spikes_into_trials, split_trajectories
+from trna.common import (
+    load_config,
+    split_spikes_into_trials,
+    split_trajectories,
+    ensure_enough_units,
+)
 from trna.allen import load_allen
 from trna.ibl import load_ibl
 from trna.dimension_reduction import elephant_gpfa
@@ -11,6 +16,7 @@ from trna.common import (
     name_from_recording,
     load_data,
     save_info_to_file,
+    decimate_train_to_min,
 )
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
@@ -28,16 +34,23 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
     unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
-    if len(unit_table) < 10:
+    if not ensure_enough_units(unit_table, 10):
+        module_logger.warning(
+            "Not enough units for {} in each brain region".format(
+                recording.get_name_for_save()
+            )
+        )
         return None
+    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, 20)
     regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    unit_table.to_csv(
-        out_dir
-        / name_from_recording(recording, f"unit_table_{regions_as_str}.csv", rel_dir)
+    unit_table_name = name_from_recording(
+        recording, f"unit_table_{regions_as_str}.csv", rel_dir
     )
+    unit_table_name = "--".join(unit_table_name.split("--")[-2:])
+    unit_table.to_csv(out_dir / unit_table_name)
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
     )
