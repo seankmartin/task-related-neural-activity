@@ -24,3 +24,15 @@ ibl_cca_regions:
     ["SUB", "TH"],
     [["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"], "LGv"],
   ]
+ibl_filter_properties:
+  presence_ratio: [">", 0.9]
+  contamination: ["<", 0.4]
+  noise_cutoff: ["<", 25]
+  amp_median: [">", 40 * 10**-6]
+  firing_rate: [">", 0.5]
+allen_filter_properties:
+  isi_violations: ["<", 0.4]
+  nn_hit_rate: [">", 0.9]
+  amplitude_cutoff: ["<", 0.1]
+  presence_ratio: [">", 0.9]
+  firing_rate: [">", 0.5]

@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 import pandas as pd
 
 from trna.dimension_reduction import scikit_cca
@@ -18,7 +19,15 @@ from simuran.analysis.unit import bin_spike_train
 module_logger = logging.getLogger("simuran.custom.cca")
 
 
-def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_regions):
+def analyse_single_recording(
+    recording,
+    gpfa_window,
+    out_dir,
+    base_dir,
+    brain_regions,
+    t_range=20,
+    stack_method="vstack",
+):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
@@ -45,26 +54,61 @@ def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_re
             recording, f"unit_table_{regions_as_str}.csv", rel_dir=rel_dir
         )
     )
-    for t in range(-20, 21, 2):
+    if t_range == 0:
+        r = [0]
+    else:
+        r = range(-t_range, t_range, 2)
+
+    correct = []
+    incorrect = []
+    for t in r:
         per_trial_spikes1 = split_spikes_into_trials(
             spike_train1, trial_info["trial_times"], end_time=gpfa_window
         )
         per_trial_spikes2 = split_spikes_into_trials(
             spike_train2, trial_info["trial_times"], end_time=gpfa_window, delay=t
         )
-        correct = []
-        incorrect = []
+        if stack_method == "vstack":
+            full_binned_spikes1 = []
+            full_binned_spikes2 = []
+            corrects = []
         for trial1, trial2, correct_ in zip(
             per_trial_spikes1, per_trial_spikes2, trial_info["trial_correct"]
         ):
-            binned_spikes1 = bin_spike_train(trial1, 0.02, t_stop=gpfa_window)
-            binned_spikes2 = bin_spike_train(trial2, 0.02, t_stop=gpfa_window)
-            cca, X, Y = scikit_cca(binned_spikes1.T, binned_spikes2.T)
-            print(X.shape, Y.shape)
-            if correct_:
-                correct.append([t, [X, Y]])
+            binned_spikes1 = bin_spike_train(trial1, 0.1, t_stop=gpfa_window)
+            binned_spikes2 = bin_spike_train(trial2, 0.1, t_stop=gpfa_window)
+            s1 = binned_spikes1.sum()
+            s2 = binned_spikes2.sum()
+            if s1 == 0 or s2 == 0:
+                module_logger.warning(
+                    f"Skipping trial with no spikes in one of the regions at delay {t}"
+                )
+                continue
+            if stack_method == "hstack":
+                cca, X, Y = scikit_cca(binned_spikes1.T, binned_spikes2.T)
+                if correct_:
+                    correct.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
+                else:
+                    incorrect.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
             else:
-                incorrect.append([t, [X, Y]])
+                corrects.append(correct_)
+                full_binned_spikes1.append(binned_spikes1)
+                full_binned_spikes2.append(binned_spikes2)
+        if stack_method == "vstack":
+            cca, X, Y = scikit_cca(
+                np.concatenate(full_binned_spikes1, axis=1).T,
+                np.concatenate(full_binned_spikes2, axis=1).T,
+            )
+            start_size = full_binned_spikes1[0].shape[1]
+            for i, c in enumerate(corrects):
+                x = X[i * start_size : (i + 1) * start_size]
+                y = Y[i * start_size : (i + 1) * start_size]
+                binned_spikes1 = full_binned_spikes1[i]
+                binned_spikes2 = full_binned_spikes2[i]
+                if c:
+                    correct.append([t, [x, y], [binned_spikes1, binned_spikes2]])
+                else:
+                    incorrect.append([t, [x, y], [binned_spikes1, binned_spikes2]])
 
     info = {
         "scikit": {"correct": correct, "incorrect": incorrect},

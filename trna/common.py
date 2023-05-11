@@ -96,6 +96,8 @@ def split_spikes_into_trials(
         If None, uses 1.2 * median of the trial lengths.
     num_trials: int
         Number of trials to use. If None, uses all trials.
+    delay: int
+        The delay in milliseconds to apply to the spike train.
 
     Returns:
     --------
@@ -103,6 +105,7 @@ def split_spikes_into_trials(
         List of lists of spike trains for each neuron in each trial.
 
     """
+    delay = delay / 1000
     end_time = (
         end_time
         if end_time is not None

@@ -332,3 +332,98 @@ def plot_cca_correlation_features(correct, incorrect, brain_regions):
 
     smr.despine()
     return fig
+
+
+def plot_cca_example(recording_info, brain_regions, t=0):
+    list_info = []
+    p1_info = []
+    p2_info = []
+    info = recording_info["scikit"]
+    correct, incorrect = info["correct"], info["incorrect"]
+    for i, trial in enumerate(correct):
+        delay = trial[0]
+        cca = trial[1]
+        list_info.append([delay, i, np.mean(cca[0]), np.mean(cca[1]), "Correct"])
+        original = trial[2]
+        p1_info.append(
+            [delay, i, np.mean(original[0][0]), np.mean(original[0][1]), "Correct"]
+        )
+        p2_info.append(
+            [delay, i, np.mean(original[1][0]), np.mean(original[1][1]), "Correct"]
+        )
+
+    for trial in incorrect:
+        delay = trial[0]
+        cca = trial[1]
+        list_info.append([delay, i, np.mean(cca[0]), np.mean(cca[1]), "Incorrect"])
+        original = trial[2]
+        p1_info.append(
+            [delay, i, np.mean(original[0][0]), np.mean(original[0][1]), "Incorrect"]
+        )
+        p2_info.append(
+            [delay, i, np.mean(original[1][0]), np.mean(original[1][1]), "Incorrect"]
+        )
+
+    region1 = brain_regions[0]
+    region2 = brain_regions[1]
+    df1 = pd.DataFrame(
+        list_info,
+        columns=[
+            "Delay",
+            "Trial number",
+            f"{region1} canonical dimension",
+            f"{region2} canonical dimension",
+            "Trial result",
+        ],
+    )
+    df2 = pd.DataFrame(
+        p1_info,
+        columns=[
+            "Delay",
+            "Trial number",
+            f"{region1} neuron 1",
+            f"{region1} neuron 2",
+            "Trial result",
+        ],
+    )
+    df3 = pd.DataFrame(
+        p2_info,
+        columns=[
+            "Delay",
+            "Trial number",
+            f"{region2} neuron 1",
+            f"{region2} neuron 2",
+            "Trial result",
+        ],
+    )
+
+    smr.set_plot_style()
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+    print(df1)
+    sns.scatterplot(
+        df1[(df1["Delay"] == t) & (df1["Trial number"] < 30)],
+        x=f"{region1} canonical dimension",
+        y=f"{region2} canonical dimension",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax[0],
+    )
+    sns.scatterplot(
+        df2[(df2["Delay"] == t) & (df2["Trial number"] < 30)],
+        x=f"{region1} neuron 1",
+        y=f"{region1} neuron 2",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax[1],
+    )
+    sns.scatterplot(
+        df3[(df3["Delay"] == t) & (df3["Trial number"] < 30)],
+        x=f"{region2} neuron 1",
+        y=f"{region2} neuron 2",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax[2],
+    )
+
+    smr.despine()
+    return fig
