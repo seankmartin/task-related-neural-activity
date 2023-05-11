@@ -46,12 +46,13 @@ def regions_to_string(brain_regions):
     return s[:-1].replace("/", "-")
 
 
-def ensure_enough_units(unit_table, min_num_units):
+def ensure_enough_units(unit_table, min_num_units, brain_region_str):
+    has_enough = True
     if len(unit_table) < min_num_units:
         has_enough = False
-    brain_regions = unit_table["brain_region"].unique()
+    brain_regions = unit_table[brain_region_str].unique()
     for region in brain_regions:
-        if len(unit_table[unit_table["brain_region"] == region]) < min_num_units:
+        if len(unit_table[unit_table[brain_region_str] == region]) < min_num_units:
             has_enough = False
             break
     return has_enough

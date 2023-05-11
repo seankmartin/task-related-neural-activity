@@ -1,91 +1,13 @@
-import logging
-
 import pandas as pd
-from trna.common import (
-    load_config,
-    split_spikes_into_trials,
-    split_trajectories,
-    ensure_enough_units,
-)
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.dimension_reduction import elephant_gpfa
 from trna.plot import simple_trajectory_plot, plot_gpfa_distance
-from trna.common import (
-    regions_to_string,
-    name_from_recording,
-    load_data,
-    save_info_to_file,
-    decimate_train_to_min,
-)
+from trna.common import regions_to_string, name_from_recording, load_data, load_config
+from trna.gpfa import analyse_single_recording
 
-from simuran.bridges.ibl_wide_bridge import IBLWideBridge
-from simuran.bridges.allen_vbn_bridge import AllenVBNBridge
 from simuran.plot.figure import SimuranFigure
 from simuran.loaders.allen_loader import BaseAllenLoader
 from simuran import set_only_log_to_file
-
-module_logger = logging.getLogger("simuran.custom.gpfa")
-
-
-def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_regions):
-    print("Analysing recording: " + recording.get_name_for_save(base_dir))
-    rel_dir = base_dir
-    is_allen = isinstance(recording.loader, BaseAllenLoader)
-    bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
-    unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
-    if not ensure_enough_units(unit_table, 10):
-        module_logger.warning(
-            "Not enough units for {} in each brain region".format(
-                recording.get_name_for_save()
-            )
-        )
-        return None
-    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, 20)
-    regions_as_str = regions_to_string(brain_regions)
-    trial_info = bridge.trial_info(recording)
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    unit_table_name = name_from_recording(
-        recording, f"unit_table_{regions_as_str}.csv", rel_dir
-    )
-    unit_table_name = "--".join(unit_table_name.split("--")[-2:])
-    unit_table.to_csv(out_dir / unit_table_name)
-    per_trial_spikes = split_spikes_into_trials(
-        spike_train, trial_info["trial_times"], end_time=gpfa_window
-    )
-    # binned = []
-    # for trial in per_trial_spikes:
-    #     binned_spikes = bin_spike_train(trial, 0.02, t_stop=gpfa_window)
-    #     binned.append(binned_spikes)
-    # binned_spikes = np.array(binned)
-    try:
-        gpfa_result, trajectories = elephant_gpfa(
-            per_trial_spikes, gpfa_window, num_dim=3
-        )
-    # scikit_fa_result, fa_trajectories = scikit_fa(binned_spikes, n_components=3)
-    except ValueError:
-        module_logger.warning(
-            "Not enough spikes for GPFA for {}".format(recording.get_name_for_save())
-        )
-        return None
-    correct, incorrect = split_trajectories(trajectories, trial_info["trial_correct"])
-    # fa_correct, fa_incorrect = split_trajectories(
-    #     fa_trajectories, trial_info["trial_correct"]
-    # )
-
-    info = {
-        "elephant": {"correct": correct, "incorrect": incorrect},
-        # "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
-    }
-    save_info_to_file(info, recording, out_dir, brain_regions, rel_dir, bit="gpfa")
-    with open(out_dir / f"gpfa_{regions_as_str}.txt", "w") as f:
-        f.write(
-            "Finished analysing: "
-            + recording.get_name_for_save(rel_dir)
-            + f" with {len(correct)} correct and {len(incorrect)} incorrect trials and {len(unit_table)} units"
-        )
-    return info
 
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
