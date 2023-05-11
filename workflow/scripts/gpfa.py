@@ -112,11 +112,9 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
                 regions.append(sub_region)
     if is_allen:
         rel_dir_path = "allen_data_dir"
-        brain_regions = config["allen_brain_regions"]
         n = "allen"
     else:
         rel_dir_path = "ibl_data_dir"
-        brain_regions = config["ibl_brain_regions"]
         n = "ibl"
     for i, recording in enumerate(recording_container):
         output_dir = (
@@ -149,9 +147,10 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
         if info is not None:
+            info["name"] = recording.get_name_for_save(rel_dir=config[rel_dir_path])
             all_info.append(info)
     output_dir = config["output_dir"] / "gpfa"
-    regions_str = regions_to_string(brain_regions)
+    regions_str = regions_to_string(regions)
     plot_gpfa_distance(all_info, output_dir, regions_str, n)
 
 
