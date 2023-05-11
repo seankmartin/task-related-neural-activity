@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import simuran as smr
+from matplotlib.lines import Line2D
+from trna.distance_measurement import procrustes_modify, distance_between_curves
 
 
 def simple_trajectory_plot(correct, incorrect):
@@ -24,20 +26,85 @@ def simple_trajectory_plot(correct, incorrect):
     average_trajectory_pass = np.mean(correct, axis=0)
     average_trajectory_fail = np.mean(incorrect, axis=0)
 
+    fig = plot_curves(average_trajectory_pass, average_trajectory_fail)
+    return fig
+
+
+def plot_all_trajectories(correct, incorrect, elev=25, azim=-45):
+    """
+    Plot all the trajectories for correct and incorrect trials.
+
+    Parameters:
+    -----------
+    correct: np.ndarray
+        The trajectories of the neurons with GPFA applied for correct trials.
+    incorrect: np.ndarray
+        The trajectories of the neurons with GPFA applied for incorrect trials.
+
+    Returns:
+    --------
+    figure: matplotlib.figure.Figure
+
+    """
     smr.set_plot_style()
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
+    ax.set_ylabel("z")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    for i in range(correct.shape[0])[:5]:
+        ax.plot(*correct[i], color="green", alpha=0.3, lw=1)
+    for i in range(incorrect.shape[0])[:5]:
+        ax.plot(*incorrect[i], color="red", alpha=0.3, lw=1)
+    ax.view_init(elev=elev, azim=azim)
 
+    custom_lines = [
+        Line2D([0], [0], color="green", alpha=0.3, lw=1),
+        Line2D([0], [0], color="red", alpha=0.3, lw=1),
+    ]
+
+    ax.legend(
+        custom_lines,
+        ["Correct trials", "Incorrect trials"],
+        loc="upper left",
+        bbox_to_anchor=(1.08, 1.0),
+        borderaxespad=0.0,
+    )
+    smr.despine()
+    return fig
+
+
+def plot_curves(
+    average_trajectory_pass,
+    average_trajectory_fail,
+    elev=25,
+    azim=-45,
+    ax=None,
+    do_legend=True,
+):
+    smr.set_plot_style()
+    if ax is None:
+        fig = plt.figure(figsize=plt.figaspect(1.0))
+        ax = fig.add_subplot(projection="3d")
+    else:
+        fig = ax.get_figure()
+    ax.set_ylabel("z")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
     # Do the plot for pass and fail
-    ax.plot(*average_trajectory_pass, label="Catch neural trajectory")
-    ax.plot(*average_trajectory_fail, "--", label="Miss neural trajectory")
+    ax.plot(
+        *average_trajectory_pass, label="Catch neural trajectory", marker="o", lw=3.0
+    )
+    ax.plot(
+        *average_trajectory_fail, label="Miss neural trajectory", marker="o", lw=3.0
+    )
     ax.plot(
         average_trajectory_pass[0][0],
         average_trajectory_pass[1][0],
         average_trajectory_pass[2][0],
         "o",
         color="green",
-        label="Start",
+        label="Start (0.0s)",
     )
     ax.plot(
         average_trajectory_pass[0][-1],
@@ -45,7 +112,7 @@ def simple_trajectory_plot(correct, incorrect):
         average_trajectory_pass[2][-1],
         "o",
         color="red",
-        label="End",
+        label="End (1.0s)",
     )
     ax.plot(
         average_trajectory_fail[0][0],
@@ -61,7 +128,9 @@ def simple_trajectory_plot(correct, incorrect):
         "o",
         color="red",
     )
-    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0.0)
+    if do_legend:
+        ax.legend(bbox_to_anchor=(1.08, 1), loc="upper left", borderaxespad=0.0)
+    ax.view_init(elev=elev, azim=azim)
     smr.despine()
 
     return fig
@@ -87,24 +156,64 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     list_info = []
     l2_info = []
     for tu in recording_info:
-        correct, incorrect = tu["elephant"]
+        item = tu["elephant"]
+        correct, incorrect = item["correct"], item["incorrect"]
         average_trajectory_pass = np.mean(correct, axis=0)
         average_trajectory_fail = np.mean(incorrect, axis=0)
 
-        distance = np.linalg.norm(
-            average_trajectory_pass - average_trajectory_fail, axis=0
+        original_distance = distance_between_curves(
+            average_trajectory_pass, average_trajectory_fail
         )
+
+        ortho_procrustes = procrustes_modify(
+            average_trajectory_pass, average_trajectory_fail, orthogonal=True
+        )
+        ortho_distance = distance_between_curves(*ortho_procrustes)
+
+        procrustes = procrustes_modify(
+            average_trajectory_pass, average_trajectory_fail, orthogonal=False
+        )
+        distance = distance_between_curves(*procrustes)
+
+        angles = [{"elev": 30, "azim": 70}, {"elev": 50, "azim": -45}]
+        for angle in angles:
+            fig = plt.figure(figsize=plt.figaspect(0.33))
+            ax = fig.add_subplot(1, 3, 1, projection="3d")
+            ax.set_title(f"Average trajectory - {original_distance:.2f}")
+            plot_curves(
+                average_trajectory_pass,
+                average_trajectory_fail,
+                ax=ax,
+                **angle,
+                do_legend=False,
+            )
+            ax = fig.add_subplot(1, 3, 2, projection="3d")
+            ax.set_title(f"Orthogonal Procrustes - {ortho_distance:.2f}")
+            plot_curves(*ortho_procrustes, ax=ax, **angle, do_legend=False)
+            ax = fig.add_subplot(1, 3, 3, projection="3d")
+            ax.set_title(f"Procrustes - {distance:.2f}")
+            plot_curves(*procrustes, ax=ax, **angle)
+            angle_as_name = f"{angle['elev']}_{angle['azim']}"
+            filename = (
+                out_dir
+                / f"{tu['name']}_gpfa_curves_{angle_as_name}_{brain_regions}_{t}.png"
+            )
+            fig = smr.SimuranFigure(fig, filename=filename)
+            fig.save()
+
         starting_distance = np.linalg.norm(
             average_trajectory_pass[:, 0] - average_trajectory_fail[:, 0]
         )
         ending_distance = np.linalg.norm(
             average_trajectory_pass[:, -1] - average_trajectory_fail[:, -1]
         )
-        correct_variance = np.var(correct, axis=0)
-        incorrect_variance = np.var(incorrect, axis=0)
+        correct_variance = np.mean(np.var(correct, axis=0))
+        incorrect_variance = np.mean(np.var(incorrect, axis=0))
         list_info.append(
             [
+                ortho_distance,
                 distance,
+                original_distance,
                 starting_distance,
                 ending_distance,
             ]
@@ -115,15 +224,21 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     df = pd.DataFrame(
         list_info,
         columns=[
+            "Orthogonal procrustes distance",
+            "Procrustes distance",
             "Trajectory distance",
             "Start distance",
             "End distance",
         ],
     )
     df2 = pd.DataFrame(l2_info, columns=["Variance", "Trial result"])
+    filename = str(out_dir / f"gpfa_distance_{brain_regions}_{t}.csv")
+    df.to_csv(filename, index=False)
+    filename = str(out_dir / f"gpfa_variance_{brain_regions}_{t}.csv")
+    df2.to_csv(filename, index=False)
     smr.set_plot_style()
 
-    for x in ["Trajectory distance", "Start distance", "End distance"]:
+    for x in ["Procrustes distance", "Start distance", "End distance"]:
         fig, ax = plt.subplots()
         sns.histplot(df, x=x, ax=ax, kde=True)
         filename = str(
@@ -131,8 +246,8 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
             / f"gpfa_distance_{x.lower().replace(' ', '_')}_{brain_regions}_{t}.png"
         )
         smr_fig = smr.SimuranFigure(fig, filename)
-        smr_fig.save()
         smr.despine()
+        smr_fig.save()
 
     fig, ax = plt.subplots()
     sns.histplot(df2, x="Variance", hue="Trial result", kde=True, ax=ax)
