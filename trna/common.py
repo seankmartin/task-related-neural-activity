@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 from pathlib import Path
 from simuran import ParamHandler
+from simuran.core.utils import convert_filter
 
 
 def save_info_to_file(info, recording, out_dir, regions, rel_dir=None, bit="gpfa"):
@@ -183,8 +184,33 @@ def load_config(config_path=None, config=None):
     except ModuleNotFoundError:
         data_directory = Path(parameters["local_dir"])
 
+    allen_filter_vals = parameters["ibl_filter_properties"]
+    ibl_filter_vals = parameters["allen_filter_properties"]
+
+    def filter_units_allen(unit_table, sort_):
+        good_unit_filter_vals = []
+        for key, val in allen_filter_vals.items():
+            op, value = val
+            filter_part = convert_filter(op)(unit_table[key], value)
+            good_unit_filter_vals.append(filter_part)
+        good_unit_filter = np.logical_and.reduce(good_unit_filter_vals)
+
+        return unit_table.loc[good_unit_filter]
+
+    def filter_units_ibl(unit_table, sort_):
+        good_unit_filter_vals = []
+        for key, val in ibl_filter_vals.items():
+            op, value = val
+            filter_part = convert_filter(op)(unit_table[key], value)
+            good_unit_filter_vals.append(filter_part)
+        good_unit_filter = np.logical_and.reduce(good_unit_filter_vals)
+
+        return unit_table.loc[good_unit_filter]
+
     parameters["allen_data_dir"] = data_directory / parameters["allen_name"]
     parameters["ibl_data_dir"] = data_directory / parameters["ibl_name"]
     parameters["output_dir"] = data_directory / parameters["output_name"]
+    parameters["allen_filter"] = filter_units_allen
+    parameters["ibl_filter"] = filter_units_ibl
 
     return parameters

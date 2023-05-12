@@ -28,7 +28,7 @@ ibl_filter_properties:
   presence_ratio: [">", 0.9]
   contamination: ["<", 0.4]
   noise_cutoff: ["<", 25]
-  amp_median: [">", 40 * 10**-6]
+  amp_median: [">", 0.00004]
   firing_rate: [">", 0.5]
 allen_filter_properties:
   isi_violations: ["<", 0.4]

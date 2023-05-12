@@ -18,13 +18,17 @@ from simuran.loaders.allen_loader import BaseAllenLoader
 module_logger = logging.getLogger("simuran.custom.gpfa")
 
 
-def analyse_single_recording(recording, gpfa_window, out_dir, base_dir, brain_regions):
+def analyse_single_recording(
+    recording, gpfa_window, out_dir, base_dir, brain_regions, filter_function=None
+):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     br_str = "structure_acronym" if is_allen else "acronym"
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
-    unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
+    unit_table, spike_train = bridge.spike_train(
+        recording, brain_regions=brain_regions, filter_function=filter_function
+    )
     if not ensure_enough_units(unit_table, 10, br_str):
         module_logger.warning(
             "Not enough units for {} in each brain region".format(

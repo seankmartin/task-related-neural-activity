@@ -57,6 +57,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
                 output_dir,
                 config[rel_dir_path],
                 regions,
+                config[f"{n}_filter"],
             )
         if info is not None:
             plot_data(
