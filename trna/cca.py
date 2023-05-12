@@ -26,7 +26,7 @@ def analyse_single_recording(
     base_dir,
     brain_regions,
     t_range=20,
-    stack_method="vstack",
+    stack_method="hstack",
     filter_function=None,
 ):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
