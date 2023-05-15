@@ -18,7 +18,7 @@ rule analyse_cca:
     params:
         overwrite = False
     log:
-        f"{config['local_dir']}/OpenDataResults/logs/gpfa.log"
+        f"{config['local_dir']}/OpenDataResults/logs/cca.log"
     script:
         "../scripts/cca.py"       
 rule plot_units:

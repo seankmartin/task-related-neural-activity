@@ -49,7 +49,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         info = load_data(
             recording, output_dir, regions, rel_dir=config[rel_dir_path], bit="cca"
         )
-        if info is None or overwrite:
+        if (info == "No pickle data found") or overwrite:
             recording = recording_container.load(i)
             info = analyse_single_recording(
                 recording,
@@ -70,13 +70,23 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             / "cca"
             / recording.get_name_for_save(rel_dir=rel_dir_path)
         )
-        info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
-        if info is not None:
+        info = load_data(
+            recording, output_dir, regions, rel_dir=config[rel_dir_path], bit="cca"
+        )
+        if info == "No pickle data found":
+            print(
+                f"No pickle data found for {recording.get_name_for_save(rel_dir=config[rel_dir_path])}"
+            )
+        elif info is not None:
+            info["name"] = recording.get_name_for_save(rel_dir=config[rel_dir_path])
             all_info.append(info)
+    print(f"Analysed {len(all_info)} recordings with sufficient units")
     output_dir = config["output_dir"] / "cca"
     fig = plot_cca_correlation(all_info, output_dir)
-    regions = regions_to_string(brain_regions)
-    sm_fig = SimuranFigure(fig, str(output_dir / f"{n}_{regions}_cca_correlation.png"))
+    regions_st = regions_to_string(regions)
+    sm_fig = SimuranFigure(
+        fig, str(output_dir / f"{n}_{regions_st}_cca_correlation.png")
+    )
     sm_fig.save()
 
 
@@ -93,13 +103,13 @@ def main(main_config, brain_table_location, overwrite=False):
         analyse_container(
             overwrite, config, allen_recording_container, brain_region_pair
         )
-        for brain_region in brain_region_pair:
-            analyse_container(
-                overwrite=overwrite,
-                config=config,
-                recording_container=allen_recording_container,
-                brain_regions=brain_region,
-            )
+        # for brain_region in brain_region_pair:
+        #     analyse_container(
+        #         overwrite=overwrite,
+        #         config=config,
+        #         recording_container=allen_recording_container,
+        #         brain_regions=[brain_region, brain_region],
+        #     )
     for brain_region_pair in config["ibl_cca_regions"]:
         ibl_recording_container, ibl_loader = load_ibl(
             config["ibl_data_dir"], brain_table, brain_region_pair

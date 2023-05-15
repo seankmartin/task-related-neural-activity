@@ -28,7 +28,7 @@ def load_data(recording, out_dir, regions, rel_dir=None, bit="gpfa"):
             info = pickle.load(f)
         return info
     else:
-        return None
+        return "No pickle data found"
 
 
 def name_from_recording(recording, filename, rel_dir=None):

@@ -42,23 +42,24 @@ def analyse_single_recording(
     unit_table1, spike_train1 = bridge.spike_train(recording, brain_regions=[region1])
     unit_table2, spike_train2 = bridge.spike_train(recording, brain_regions=[region2])
     unit_table = pd.concat([unit_table1, unit_table2])
+    regions_as_str = regions_to_string(brain_regions)
+    trial_info = bridge.trial_info(recording)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    unit_table_name = name_from_recording(
+        recording, f"unit_table_{regions_as_str}.csv", rel_dir
+    )
+    unit_table_name = "--".join(unit_table_name.split("--")[-2:])
+    unit_table.to_csv(out_dir / unit_table_name)
     if not ensure_enough_units(unit_table, 15, br_str):
         module_logger.warning(
             "Not enough units for {} in each brain region".format(
                 recording.get_name_for_save()
             )
         )
+        save_info_to_file(None, recording, out_dir, brain_regions, rel_dir, bit="cca")
         return None
-    regions_as_str = regions_to_string(brain_regions)
-    trial_info = bridge.trial_info(recording)
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    unit_table.to_csv(
-        out_dir
-        / name_from_recording(
-            recording, f"unit_table_{regions_as_str}.csv", rel_dir=rel_dir
-        )
-    )
     if t_range == 0:
         r = [0]
     else:

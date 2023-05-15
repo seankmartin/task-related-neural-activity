@@ -260,7 +260,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
 def plot_cca_correlation(recording_info, out_dir):
     list_info = []
     for tu in recording_info:
-        correct, incorrect = tu["scikit"]
+        correct, incorrect = tu["scikit"]["correct"], tu["scikit"]["incorrect"]
         for trial in correct:
             delay = trial[0]
             cca = trial[1]
@@ -302,14 +302,14 @@ def plot_cca_correlation_features(correct, incorrect, brain_regions):
             continue
         cca = trial[1]
         for val1, val2 in zip(cca[0], cca[1]):
-            list_info.append([val1, val2, "Correct"])
+            list_info.append([np.mean(val1), np.mean(val2), "Correct"])
     for trial in incorrect:
         delay = trial[0]
         if delay != 0:
             continue
         cca = trial[1]
         for val1, val2 in zip(cca[0], cca[1]):
-            list_info.append([val1, val2, "Incorrect"])
+            list_info.append([np.mean(val1), np.mean(val2), "Incorrect"])
     df = pd.DataFrame(
         list_info,
         columns=[
@@ -323,8 +323,8 @@ def plot_cca_correlation_features(correct, incorrect, brain_regions):
     fig, ax = plt.subplots()
     sns.scatterplot(
         df,
-        x="Delay",
-        y="Population correlation",
+        x=f"{br1} canonical dimension",
+        y=f"{br2} canonical dimension",
         hue="Trial result",
         style="Trial result",
         ax=ax,

@@ -47,7 +47,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         info = load_data(
             recording, output_dir, regions, rel_dir=config[rel_dir_path], bit="gpfa"
         )
-        if info is None or overwrite:
+        if (info == "No pickle data found") or overwrite:
             recording = recording_container.load(i)
             info = analyse_single_recording(
                 recording,
@@ -69,9 +69,14 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             / recording.get_name_for_save(rel_dir=rel_dir_path)
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
-        if info is not None:
+        if info == "No pickle data found":
+            print(
+                f"No pickle data found for {recording.get_name_for_save(rel_dir=config[rel_dir_path])}"
+            )
+        elif info is not None:
             info["name"] = recording.get_name_for_save(rel_dir=config[rel_dir_path])
             all_info.append(info)
+    print(f"Analysed {len(all_info)} recordings with sufficient units")
     output_dir = config["output_dir"] / "gpfa"
     regions_str = regions_to_string(regions)
     plot_gpfa_distance(all_info, output_dir, regions_str, n)

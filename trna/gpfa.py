@@ -31,13 +31,6 @@ def analyse_single_recording(
         else IBLWideBridge(good_unit_properties=filter_prop)
     )
     unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
-    if not ensure_enough_units(unit_table, 10, br_str):
-        module_logger.warning(
-            "Not enough units for {} in each brain region".format(
-                recording.get_name_for_save()
-            )
-        )
-        return None
     unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, 20)
     regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)
@@ -48,6 +41,15 @@ def analyse_single_recording(
     )
     unit_table_name = "--".join(unit_table_name.split("--")[-2:])
     unit_table.to_csv(out_dir / unit_table_name)
+    if not ensure_enough_units(unit_table, 10, br_str):
+        module_logger.warning(
+            "Not enough units for {} in each brain region".format(
+                recording.get_name_for_save()
+            )
+        )
+        save_info_to_file(None, recording, out_dir, brain_regions, rel_dir, bit="gpfa")
+        return None
+
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
     )
