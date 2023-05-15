@@ -12,21 +12,31 @@ from simuran.bridges.ibl_wide_bridge import IBLWideBridge
 from simuran import set_only_log_to_file
 
 
+def to_individual_regions(brain_regions):
+    regions = []
+    for region in brain_regions:
+        if isinstance(region, str):
+            regions.append(region)
+        else:
+            for r in region:
+                regions.append(r)
+    return regions
+
+
 def plot_cells(recording_container, brain_regions, output_dir):
     is_allen = isinstance(recording_container[0].loader, BaseAllenLoader)
     bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
 
     unit_tables = []
-    for recording in recording_container:
-        unit_table, spike_train = bridge.spike_train(
-            recording, brain_regions=brain_regions
-        )
+    regions = to_individual_regions(brain_regions)
+    for recording in recording_container.load_iter():
+        unit_table, spike_train = bridge.spike_train(recording, brain_regions=regions)
         unit_tables.append(unit_table)
 
     unit_table = pd.concat(unit_tables)
 
     if is_allen:
-        unit_properties = [""]
+        unit_properties = ["firing_rate"]
         structure_name = "structure_acronym"
     else:
         structure_name = "acronym"
@@ -72,11 +82,11 @@ def main(config_location, brain_table_location, output_dir):
             config["ibl_data_dir"], brain_table, config["ibl_brain_regions"]
         )
         print(
-            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
+            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {brain_region_pair}"
         )
         n = "ibl"
         br_str = region_to_string(brain_region_pair)
-        plot_cells(ibl_recording_container, ["VISp"], output_dir / n / br_str)
+        plot_cells(ibl_recording_container, brain_region_pair, output_dir / n / br_str)
 
 
 if __name__ == "__main__":

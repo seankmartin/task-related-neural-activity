@@ -53,9 +53,17 @@ def ensure_enough_units(unit_table, min_num_units, brain_region_str):
         has_enough = False
     brain_regions = unit_table[brain_region_str].unique()
     for region in brain_regions:
-        if len(unit_table[unit_table[brain_region_str] == region]) < min_num_units:
-            has_enough = False
-            break
+        if isinstance(region, str):
+            if len(unit_table[unit_table[brain_region_str] == region]) < min_num_units:
+                has_enough = False
+                break
+        else:
+            num_units = 0
+            for sub_region in region:
+                num_units += len(unit_table[unit_table[brain_region_str] == sub_region])
+            if num_units < min_num_units:
+                has_enough = False
+                break
     return has_enough
 
 
@@ -184,33 +192,8 @@ def load_config(config_path=None, config=None):
     except ModuleNotFoundError:
         data_directory = Path(parameters["local_dir"])
 
-    allen_filter_vals = parameters["ibl_filter_properties"]
-    ibl_filter_vals = parameters["allen_filter_properties"]
-
-    def filter_units_allen(unit_table, sort_):
-        good_unit_filter_vals = []
-        for key, val in allen_filter_vals.items():
-            op, value = val
-            filter_part = convert_filter(op)(unit_table[key], value)
-            good_unit_filter_vals.append(filter_part)
-        good_unit_filter = np.logical_and.reduce(good_unit_filter_vals)
-
-        return unit_table.loc[good_unit_filter]
-
-    def filter_units_ibl(unit_table, sort_):
-        good_unit_filter_vals = []
-        for key, val in ibl_filter_vals.items():
-            op, value = val
-            filter_part = convert_filter(op)(unit_table[key], value)
-            good_unit_filter_vals.append(filter_part)
-        good_unit_filter = np.logical_and.reduce(good_unit_filter_vals)
-
-        return unit_table.loc[good_unit_filter]
-
     parameters["allen_data_dir"] = data_directory / parameters["allen_name"]
     parameters["ibl_data_dir"] = data_directory / parameters["ibl_name"]
     parameters["output_dir"] = data_directory / parameters["output_name"]
-    parameters["allen_filter"] = filter_units_allen
-    parameters["ibl_filter"] = filter_units_ibl
 
     return parameters

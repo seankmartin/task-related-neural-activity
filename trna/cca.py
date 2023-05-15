@@ -27,20 +27,20 @@ def analyse_single_recording(
     brain_regions,
     t_range=20,
     stack_method="hstack",
-    filter_function=None,
+    filter_prop=None,
 ):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     br_str = "structure_acronym" if is_allen else "acronym"
-    bridge = AllenVBNBridge() if is_allen else IBLWideBridge()
+    bridge = (
+        AllenVBNBridge(good_unit_properties=filter_prop)
+        if is_allen
+        else IBLWideBridge(good_unit_properties=filter_prop)
+    )
     region1, region2 = brain_regions
-    unit_table1, spike_train1 = bridge.spike_train(
-        recording, brain_regions=[region1], filter_function=filter_function
-    )
-    unit_table2, spike_train2 = bridge.spike_train(
-        recording, brain_regions=[region2], filter_function=filter_function
-    )
+    unit_table1, spike_train1 = bridge.spike_train(recording, brain_regions=[region1])
+    unit_table2, spike_train2 = bridge.spike_train(recording, brain_regions=[region2])
     unit_table = pd.concat([unit_table1, unit_table2])
     if not ensure_enough_units(unit_table, 15, br_str):
         module_logger.warning(
