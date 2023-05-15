@@ -257,7 +257,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     fig.save()
 
 
-def plot_cca_correlation(recording_info, out_dir):
+def plot_cca_correlation(recording_info, out_dir, n, regions):
     list_info = []
     for tu in recording_info:
         correct, incorrect = tu["scikit"]["correct"], tu["scikit"]["incorrect"]
@@ -274,12 +274,12 @@ def plot_cca_correlation(recording_info, out_dir):
     df = pd.DataFrame(
         list_info, columns=["Delay", "Population correlation", "Trial result"]
     )
-    df.to_csv(out_dir / "cca_correlation.csv", index=False)
+    df.to_csv(out_dir / f"cca_correlation{n}_{regions}.csv", index=False)
 
     smr.set_plot_style()
     fig, ax = plt.subplots()
     sns.lineplot(
-        df,
+        data=df,
         x="Delay",
         y="Population correlation",
         hue="Trial result",
@@ -365,6 +365,8 @@ def plot_cca_example(recording_info, brain_regions, t=0):
         )
 
     region1 = brain_regions[0]
+    if isinstance(region1, list):
+        region1 = region1[0][0]
     region2 = brain_regions[1]
     df1 = pd.DataFrame(
         list_info,
@@ -399,7 +401,6 @@ def plot_cca_example(recording_info, brain_regions, t=0):
 
     smr.set_plot_style()
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-    print(df1)
     sns.scatterplot(
         df1[(df1["Delay"] == t) & (df1["Trial number"] < 30)],
         x=f"{region1} canonical dimension",

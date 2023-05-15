@@ -1,7 +1,11 @@
 import pandas as pd
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.plot import plot_cca_correlation, plot_cca_correlation_features
+from trna.plot import (
+    plot_cca_correlation,
+    plot_cca_correlation_features,
+    plot_cca_example,
+)
 from trna.common import regions_to_string, name_from_recording, load_data, load_config
 from trna.cca import analyse_single_recording
 
@@ -12,6 +16,12 @@ from simuran import set_only_log_to_file
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
     regions_as_str = regions_to_string(brain_regions)
+    fig = plot_cca_example(info, brain_regions)
+    out_name = name_from_recording(
+        recording, f"cca_example_{regions_as_str}.png", rel_dir=rel_dir
+    )
+    fig = SimuranFigure(fig, str(out_dir / out_name))
+    fig.save()
     for key, value in info.items():
         correct = value["correct"]
         incorrect = value["incorrect"]
@@ -82,7 +92,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             all_info.append(info)
     print(f"Analysed {len(all_info)} recordings with sufficient units")
     output_dir = config["output_dir"] / "cca"
-    fig = plot_cca_correlation(all_info, output_dir)
+    fig = plot_cca_correlation(all_info, output_dir, n, regions)
     regions_st = regions_to_string(regions)
     sm_fig = SimuranFigure(
         fig, str(output_dir / f"{n}_{regions_st}_cca_correlation.png")
