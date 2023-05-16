@@ -402,7 +402,7 @@ def plot_cca_example(recording_info, brain_regions, t=0):
     smr.set_plot_style()
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     sns.scatterplot(
-        df1[(df1["Delay"] == t) & (df1["Trial number"] < 30)],
+        df1[(df1["Delay"] == t)][:30],
         x=f"{region1} canonical dimension",
         y=f"{region2} canonical dimension",
         hue="Trial result",
@@ -410,7 +410,7 @@ def plot_cca_example(recording_info, brain_regions, t=0):
         ax=ax[0],
     )
     sns.scatterplot(
-        df2[(df2["Delay"] == t) & (df2["Trial number"] < 30)],
+        df2[(df2["Delay"] == t)][:30],
         x=f"{region1} neuron 1",
         y=f"{region1} neuron 2",
         hue="Trial result",
@@ -418,7 +418,7 @@ def plot_cca_example(recording_info, brain_regions, t=0):
         ax=ax[1],
     )
     sns.scatterplot(
-        df3[(df3["Delay"] == t) & (df3["Trial number"] < 30)],
+        df3[(df3["Delay"] == t)][:30],
         x=f"{region2} neuron 1",
         y=f"{region2} neuron 2",
         hue="Trial result",

@@ -25,7 +25,7 @@ def analyse_single_recording(
     out_dir,
     base_dir,
     brain_regions,
-    t_range=20,
+    t_range=21,
     stack_method="hstack",
     filter_prop=None,
 ):
@@ -67,10 +67,10 @@ def analyse_single_recording(
 
     correct = []
     incorrect = []
+    per_trial_spikes1 = split_spikes_into_trials(
+        spike_train1, trial_info["trial_times"], end_time=gpfa_window
+    )
     for t in r:
-        per_trial_spikes1 = split_spikes_into_trials(
-            spike_train1, trial_info["trial_times"], end_time=gpfa_window
-        )
         per_trial_spikes2 = split_spikes_into_trials(
             spike_train2, trial_info["trial_times"], end_time=gpfa_window, delay=t
         )
