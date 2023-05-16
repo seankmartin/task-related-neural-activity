@@ -14,11 +14,11 @@ def save_info_to_file(info, recording, out_dir, regions, rel_dir=None, bit="gpfa
         pickle.dump(info, f)
 
 
-def load_data(recording, out_dir, regions, rel_dir=None, bit="gpfa"):
+def load_data(recording, out_dir: "Path", regions, rel_dir=None, bit="gpfa"):
     name = recording.get_name_for_save(rel_dir=rel_dir)
     regions_as_str = regions_to_string(regions)
     save_name = out_dir / "pickles" / (name + regions_as_str + f"_{bit}" + ".pkl")
-    if save_name.exists():
+    if save_name.is_file():
         print(
             "Loading pickle data for: "
             + recording.get_name_for_save(rel_dir=rel_dir)

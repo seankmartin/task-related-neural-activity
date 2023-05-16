@@ -44,11 +44,9 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
                 regions.append(sub_region)
     if is_allen:
         rel_dir_path = "allen_data_dir"
-        brain_regions = config["allen_brain_regions"]
         n = "allen"
     else:
         rel_dir_path = "ibl_data_dir"
-        brain_regions = config["ibl_brain_regions"]
         n = "ibl"
     for i, recording in enumerate(recording_container):
         output_dir = (

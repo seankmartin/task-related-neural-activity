@@ -92,6 +92,8 @@ def analyse_single_recording(
                 continue
             if stack_method == "hstack":
                 cca, X, Y = scikit_cca(binned_spikes1.T, binned_spikes2.T)
+                X = X.flatten()
+                Y = Y.flatten()
                 if correct_:
                     correct.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
                 else:
