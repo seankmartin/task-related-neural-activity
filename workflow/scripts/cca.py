@@ -97,6 +97,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     )
     sm_fig.save()
 
+    return all_info
+
 
 def main(main_config, brain_table_location, overwrite=False):
     config = load_config(config=main_config)

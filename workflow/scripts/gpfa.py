@@ -81,6 +81,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     regions_str = regions_to_string(regions)
     plot_gpfa_distance(all_info, output_dir, regions_str, n)
 
+    return all_info
+
 
 def main(main_config, brain_table_location, overwrite=False):
     config = load_config(config=main_config)
@@ -92,14 +94,23 @@ def main(main_config, brain_table_location, overwrite=False):
         print(
             f"Loaded {len(allen_recording_container)} recordings from Allen with brain regions {brain_region_pair}"
         )
-        analyse_container(
+        full_info = analyse_container(
             overwrite, config, allen_recording_container, brain_region_pair
         )
         for brain_region in brain_region_pair:
+            rows = []
+            for i, recording in enumerate(allen_recording_container):
+                if recording.get_name_for_save(rel_dir=config["allen_data_dir"]) in [
+                    info["name"] for info in full_info
+                ]:
+                    rows.append(i)
+            sub_recording_container = allen_recording_container.filter_table(
+                rows, inplace=False
+            )
             analyse_container(
                 overwrite=overwrite,
                 config=config,
-                recording_container=allen_recording_container,
+                recording_container=sub_recording_container,
                 brain_regions=[brain_region],
             )
     for brain_region_pair in config["ibl_brain_regions"]:
@@ -112,7 +123,28 @@ def main(main_config, brain_table_location, overwrite=False):
         if len(ibl_recording_container) == 0:
             print("No recordings found for this brain region pair")
             continue
-        analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
+        full_info = analyse_container(
+            overwrite, config, ibl_recording_container, brain_region_pair
+        )
+        for brain_region in brain_region_pair:
+            rows = []
+            for i, recording in enumerate(ibl_recording_container):
+                if recording.get_name_for_save(rel_dir=config["ibl_data_dir"]) in [
+                    info["name"] for info in full_info
+                ]:
+                    rows.append(i)
+            sub_recording_container = ibl_recording_container.filter_table(
+                rows, inplace=False
+            )
+            if len(sub_recording_container) == 0:
+                print("No recordings found for this brain region")
+                continue
+            analyse_container(
+                overwrite=overwrite,
+                config=config,
+                recording_container=sub_recording_container,
+                brain_regions=[brain_region],
+            )
 
 
 if __name__ == "__main__":
