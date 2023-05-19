@@ -216,6 +216,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
                 original_distance,
                 starting_distance,
                 ending_distance,
+                (starting_distance + ending_distance) / 2,
             ]
         )
         l2_info.append([correct_variance, "Correct"])
@@ -229,6 +230,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
             "Trajectory distance",
             "Start distance",
             "End distance",
+            "Average distance",
         ],
     )
     df2 = pd.DataFrame(l2_info, columns=["Variance", "Trial result"])
@@ -248,6 +250,13 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
         smr_fig = smr.SimuranFigure(fig, filename)
         smr.despine()
         smr_fig.save()
+
+    fig, ax = plt.subplots()
+    sns.scatterplot(df, x="Average distance", y="Procrustes distance", ax=ax)
+    filename = str(out_dir / f"gpfa_distance_average_{brain_regions}_{t}.png")
+    smr_fig = smr.SimuranFigure(fig, filename)
+    smr.despine()
+    smr_fig.save()
 
     fig, ax = plt.subplots()
     sns.histplot(df2, x="Variance", hue="Trial result", kde=True, ax=ax)
