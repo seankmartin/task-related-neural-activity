@@ -100,15 +100,18 @@ def main(main_config, brain_table_location, overwrite=False):
                 overwrite=overwrite,
                 config=config,
                 recording_container=allen_recording_container,
-                brain_regions=brain_region,
+                brain_regions=[brain_region],
             )
     for brain_region_pair in config["ibl_brain_regions"]:
         ibl_recording_container, ibl_loader = load_ibl(
             config["ibl_data_dir"], brain_table, brain_region_pair
         )
         print(
-            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
+            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {brain_region_pair}"
         )
+        if len(ibl_recording_container) == 0:
+            print("No recordings found for this brain region pair")
+            continue
         analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
 
 
