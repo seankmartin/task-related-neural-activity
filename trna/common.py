@@ -66,25 +66,20 @@ def ensure_enough_units(unit_table, min_num_units, brain_region_str):
     return has_enough
 
 
-def decimate_train_to_min(unit_table, spike_train, threshold):
-    brain_regions = unit_table["brain_region"].unique()
+def decimate_train_to_min(unit_table, spike_train, threshold, br_str):
+    brain_regions = unit_table[br_str].unique()
     new_spike_train = {}
     new_unit_table = unit_table.copy()
     for region in brain_regions:
-        region_units = unit_table[unit_table["brain_region"] == region]
+        region_units = unit_table[unit_table[br_str] == region]
         if len(region_units) > threshold:
             random_units = np.random.choice(range(len(region_units)), threshold)
-            for i in random_units:
-                new_spike_train[region_units.iloc[i].index] = spike_train[
-                    region_units.iloc[i].index
-                ]
         else:
-            for i in range(len(region_units)):
-                new_spike_train[region_units.iloc[i].index] = spike_train[
-                    region_units.iloc[i].index
-                ]
-    new_unit_table = new_unit_table.loc[new_spike_train.keys()]
-    return new_spike_train
+            random_units = range(len(region_units))
+        for i in random_units:
+            new_spike_train[region_units.index[i]] = spike_train[region_units.index[i]]
+    new_unit_table = new_unit_table.loc[list(new_spike_train.keys())]
+    return new_unit_table, new_spike_train
 
 
 def split_spikes_into_trials(

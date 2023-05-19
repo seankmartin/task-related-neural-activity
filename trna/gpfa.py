@@ -31,7 +31,7 @@ def analyse_single_recording(
         else IBLWideBridge(good_unit_properties=filter_prop)
     )
     unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
-    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, 20)
+    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, 20, br_str)
     regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)
 
