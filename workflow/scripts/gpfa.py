@@ -65,8 +65,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     for i, recording in enumerate(recording_container):
         output_dir = (
             config["output_dir"]
-            / "cca"
-            / recording.get_name_for_save(rel_dir=rel_dir_path)
+            / "gpfa"
+            / recording.get_name_for_save(rel_dir=config[rel_dir_path])
         )
         info = load_data(recording, output_dir, regions, rel_dir=config[rel_dir_path])
         if info == "No pickle data found":

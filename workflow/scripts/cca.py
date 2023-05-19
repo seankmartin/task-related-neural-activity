@@ -76,7 +76,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         output_dir = (
             config["output_dir"]
             / "cca"
-            / recording.get_name_for_save(rel_dir=rel_dir_path)
+            / recording.get_name_for_save(rel_dir=config[rel_dir_path])
         )
         info = load_data(
             recording, output_dir, regions, rel_dir=config[rel_dir_path], bit="cca"
