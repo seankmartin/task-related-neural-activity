@@ -5,24 +5,29 @@ ibl_name: IBLdata
 allen_manifest: visual-behavior-neuropixels_project_manifest_v0.4.0.json
 output_name: OpenDataResults
 gpfa_window: 1.0
-allen_brain_regions: [["CA1", "TH", "SUB"], ["VISp", "LGv", "VISl"]]
+allen_brain_regions: [["CA1", "TH", "SUB"], ["VISp", "LGv", "TH"]]
 ibl_brain_regions:
   [
     ["CA1", "TH", "SUB"],
-    [
-      ["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"],
-      "LGv",
-      ["VISl1", "VISl2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"],
-    ],
+    [["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"], "LGv", "TH"],
   ]
 allen_cca_regions:
-  [["CA1", "SUB"], ["CA1", "TH"], ["SUB", "TH"], ["VISp", "LGv"]]
+  [
+    ["CA1", "SUB"],
+    ["CA1", "TH"],
+    ["SUB", "TH"],
+    ["VISp", "LGv"],
+    ["VISp", "TH"],
+    ["LGv", "TH"],
+  ]
 ibl_cca_regions:
   [
     ["CA1", "SUB"],
     ["CA1", "TH"],
     ["SUB", "TH"],
     [["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"], "LGv"],
+    [["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"], "TH"],
+    ["LGv", "TH"],
   ]
 ibl_filter_properties:
   presence_ratio: [">", 0.9]
@@ -32,7 +37,6 @@ ibl_filter_properties:
   firing_rate: [">", 0.5]
 allen_filter_properties:
   isi_violations: ["<", 0.4]
-  nn_hit_rate: [">", 0.9]
   amplitude_cutoff: ["<", 0.1]
   presence_ratio: [">", 0.9]
   firing_rate: [">", 0.5]
