@@ -1,3 +1,4 @@
+import shutil
 import pickle
 import numpy as np
 from pathlib import Path
@@ -66,14 +67,19 @@ def ensure_enough_units(unit_table, min_num_units, brain_region_str):
     return has_enough
 
 
-def decimate_train_to_min(unit_table, spike_train, threshold, br_str):
+def decimate_train_to_min(unit_table, spike_train, br_str):
     brain_regions = unit_table[br_str].unique()
     new_spike_train = {}
     new_unit_table = unit_table.copy()
+    min_units = 100000
     for region in brain_regions:
         region_units = unit_table[unit_table[br_str] == region]
-        if len(region_units) > threshold:
-            random_units = np.random.choice(range(len(region_units)), threshold)
+        min_units = min(min_units, len(region_units))
+    for region in brain_regions:
+        if len(region_units) > min_units:
+            random_units = np.random.choice(
+                range(len(region_units)), min_units, replace=False
+            )
         else:
             random_units = range(len(region_units))
         for i in random_units:
@@ -191,3 +197,10 @@ def load_config(config_path=None, config=None):
     parameters["output_dir"] = data_directory / parameters["output_name"]
 
     return parameters
+
+
+def write_config(cfg_file, cfg, output_location):
+    if cfg_file is not None:
+        shutil.copy(cfg_file, output_location)
+    else:
+        shutil.write(output_location)

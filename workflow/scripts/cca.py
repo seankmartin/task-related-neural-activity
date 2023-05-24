@@ -1,12 +1,15 @@
+import shutil
 import pandas as pd
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.plot import (
-    plot_cca_correlation,
-    plot_cca_correlation_features,
-    plot_cca_example,
+from trna.plot import plot_cca_correlation, plot_cca_example
+from trna.common import (
+    regions_to_string,
+    name_from_recording,
+    load_data,
+    load_config,
+    write_config,
 )
-from trna.common import regions_to_string, name_from_recording, load_data, load_config
 from trna.cca import analyse_single_recording
 
 from simuran.plot.figure import SimuranFigure
@@ -22,15 +25,6 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
     )
     fig = SimuranFigure(fig, str(out_dir / out_name))
     fig.save()
-    for key, value in info.items():
-        correct = value["correct"]
-        incorrect = value["incorrect"]
-        fig = plot_cca_correlation_features(correct, incorrect, brain_regions)
-        out_name = name_from_recording(
-            recording, f"cca_{key}_{regions_as_str}.png", rel_dir=rel_dir
-        )
-        fig = SimuranFigure(fig, str(out_dir / out_name))
-        fig.save()
 
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
@@ -61,7 +55,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             recording = recording_container.load(i)
             info = analyse_single_recording(
                 recording,
-                config["gpfa_window"],
+                config["cca_params"],
                 output_dir,
                 config[rel_dir_path],
                 regions,
@@ -128,6 +122,8 @@ def main(main_config, brain_table_location, overwrite=False):
             f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
         )
         analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
+
+    write_config(main_config, config, config["output_dir"] / "cca" / "config.yaml")
 
 
 if __name__ == "__main__":

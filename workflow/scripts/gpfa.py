@@ -2,7 +2,13 @@ import pandas as pd
 from trna.allen import load_allen
 from trna.ibl import load_ibl
 from trna.plot import simple_trajectory_plot, plot_gpfa_distance
-from trna.common import regions_to_string, name_from_recording, load_data, load_config
+from trna.common import (
+    regions_to_string,
+    name_from_recording,
+    load_data,
+    load_config,
+    write_config,
+)
 from trna.gpfa import analyse_single_recording
 
 from simuran.plot.figure import SimuranFigure
@@ -51,7 +57,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             recording = recording_container.load(i)
             info = analyse_single_recording(
                 recording,
-                config["gpfa_window"],
+                config["gpfa_params"],
                 output_dir,
                 config[rel_dir_path],
                 regions,
@@ -145,6 +151,8 @@ def main(main_config, brain_table_location, overwrite=False):
                 recording_container=sub_recording_container,
                 brain_regions=[brain_region],
             )
+
+    write_config(main_config, config, config["output_dir"] / "gpfa" / "config.yaml")
 
 
 if __name__ == "__main__":

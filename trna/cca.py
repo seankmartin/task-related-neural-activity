@@ -21,7 +21,7 @@ module_logger = logging.getLogger("simuran.custom.cca")
 
 def analyse_single_recording(
     recording,
-    gpfa_window,
+    cca_params,
     out_dir,
     base_dir,
     brain_regions,
@@ -30,6 +30,7 @@ def analyse_single_recording(
     filter_prop=None,
 ):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
+    cca_window = cca_params["cca_window"]
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     br_str = "structure_acronym" if is_allen else "acronym"
@@ -68,11 +69,11 @@ def analyse_single_recording(
     correct = []
     incorrect = []
     per_trial_spikes1 = split_spikes_into_trials(
-        spike_train1, trial_info["trial_times"], end_time=gpfa_window
+        spike_train1, trial_info["trial_times"], end_time=cca_window
     )
     for t in r:
         per_trial_spikes2 = split_spikes_into_trials(
-            spike_train2, trial_info["trial_times"], end_time=gpfa_window, delay=t
+            spike_train2, trial_info["trial_times"], end_time=cca_window, delay=t
         )
         if stack_method == "vstack":
             full_binned_spikes1 = []
@@ -81,8 +82,8 @@ def analyse_single_recording(
         for trial1, trial2, correct_ in zip(
             per_trial_spikes1, per_trial_spikes2, trial_info["trial_correct"]
         ):
-            binned_spikes1 = bin_spike_train(trial1, 0.1, t_stop=gpfa_window)
-            binned_spikes2 = bin_spike_train(trial2, 0.1, t_stop=gpfa_window)
+            binned_spikes1 = bin_spike_train(trial1, 0.1, t_stop=cca_window)
+            binned_spikes2 = bin_spike_train(trial2, 0.1, t_stop=cca_window)
             s1 = binned_spikes1.sum()
             s2 = binned_spikes2.sum()
             if s1 == 0 or s2 == 0:

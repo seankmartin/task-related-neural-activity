@@ -300,49 +300,6 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     return fig
 
 
-def plot_cca_correlation_features(correct, incorrect, brain_regions):
-    br1, br2 = brain_regions
-    if isinstance(br2, list):
-        br2 = br2[0][:-1]
-    list_info = []
-    for trial in correct:
-        delay = trial[0]
-        if delay != 0:
-            continue
-        cca = trial[1]
-        for val1, val2 in zip(cca[0], cca[1]):
-            list_info.append([np.mean(val1), np.mean(val2), "Correct"])
-    for trial in incorrect:
-        delay = trial[0]
-        if delay != 0:
-            continue
-        cca = trial[1]
-        for val1, val2 in zip(cca[0], cca[1]):
-            list_info.append([np.mean(val1), np.mean(val2), "Incorrect"])
-    df = pd.DataFrame(
-        list_info,
-        columns=[
-            f"{br1} canonical dimension",
-            f"{br2} canonical dimension",
-            "Trial result",
-        ],
-    )
-
-    smr.set_plot_style()
-    fig, ax = plt.subplots()
-    sns.scatterplot(
-        df,
-        x=f"{br1} canonical dimension",
-        y=f"{br2} canonical dimension",
-        hue="Trial result",
-        style="Trial result",
-        ax=ax,
-    )
-
-    smr.despine()
-    return fig
-
-
 def plot_cca_example(recording_info, brain_regions, t=0):
     list_info = []
     p1_info = []
@@ -361,7 +318,7 @@ def plot_cca_example(recording_info, brain_regions, t=0):
             [delay, i, np.mean(original[1][0]), np.mean(original[1][1]), "Correct"]
         )
 
-    for trial in incorrect:
+    for i, trial in enumerate(incorrect):
         delay = trial[0]
         cca = trial[1]
         list_info.append([delay, i, np.mean(cca[0]), np.mean(cca[1]), "Incorrect"])

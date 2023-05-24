@@ -1,5 +1,8 @@
 import logging
 
+import numpy as np
+import quantities as pq
+
 from trna.dimension_reduction import elephant_gpfa
 from trna.common import (
     split_spikes_into_trials,
@@ -19,8 +22,11 @@ module_logger = logging.getLogger("simuran.custom.gpfa")
 
 
 def analyse_single_recording(
-    recording, gpfa_window, out_dir, base_dir, brain_regions, filter_prop
+    recording, gpfa_params, out_dir, base_dir, brain_regions, filter_prop
 ):
+    np.random.seed(42)
+    gpfa_window = gpfa_params["gpfa_window"]
+    gpfa_binsize = int(gpfa_params["gpfa_binsize"])
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
@@ -31,7 +37,6 @@ def analyse_single_recording(
         else IBLWideBridge(good_unit_properties=filter_prop)
     )
     unit_table, spike_train = bridge.spike_train(recording, brain_regions=brain_regions)
-    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, 20, br_str)
     regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)
 
@@ -49,6 +54,12 @@ def analyse_single_recording(
         )
         save_info_to_file(None, recording, out_dir, brain_regions, rel_dir, bit="gpfa")
         return None
+    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, br_str)
+    unit_table_name = name_from_recording(
+        recording, f"unit_table_{regions_as_str}_decimated.csv", rel_dir
+    )
+    unit_table_name = "--".join(unit_table_name.split("--")[-2:])
+    unit_table.to_csv(out_dir / unit_table_name)
 
     per_trial_spikes = split_spikes_into_trials(
         spike_train, trial_info["trial_times"], end_time=gpfa_window
@@ -60,7 +71,7 @@ def analyse_single_recording(
     # binned_spikes = np.array(binned)
     try:
         gpfa_result, trajectories = elephant_gpfa(
-            per_trial_spikes, gpfa_window, num_dim=3
+            per_trial_spikes, gpfa_window, num_dim=3, bin_size=gpfa_binsize * pq.ms
         )
     # scikit_fa_result, fa_trajectories = scikit_fa(binned_spikes, n_components=3)
     except ValueError:

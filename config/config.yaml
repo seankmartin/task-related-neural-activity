@@ -4,7 +4,11 @@ allen_name: allen_npixels2
 ibl_name: IBLdata
 allen_manifest: visual-behavior-neuropixels_project_manifest_v0.4.0.json
 output_name: OpenDataResults
-gpfa_window: 1.0
+gpfa_params:
+  gpfa_window: 1.0
+  gpfa_binsize: 20
+cca_params:
+  cca_window: 1.0
 allen_brain_regions: [["CA1", "TH", "SUB"], ["VISp", "LGv", "TH"]]
 ibl_brain_regions:
   [
