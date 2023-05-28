@@ -285,16 +285,45 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     )
     df.to_csv(out_dir / f"cca_correlation{n}_{regions}.csv", index=False)
 
+    list_info = []
+    for tu in recording_info:
+        correct_rates, incorrect_rates = tu["correct_rates"], tu["incorrect_rates"]
+        for trial in correct_rates:
+            delay = trial[0]
+            rate = trial[1]
+            correlation_correct = np.corrcoef(rate[0], rate[1])[0, 1]
+            list_info.append([correlation_correct, "Correct"])
+        for trial in incorrect_rates:
+            delay = trial[0]
+            rate = trial[1]
+            correlation_correct = np.corrcoef(rate[0], rate[1])[0, 1]
+            list_info.append([correlation_correct, "Incorrect"])
+    df2 = pd.DataFrame(
+        list_info, columns=["Delay", "Population correlation", "Trial result"]
+    )
+    df2.to_csv(out_dir / f"rate_correlation{n}_{regions}.csv", index=False)
+
     smr.set_plot_style()
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(2, 1)
     sns.lineplot(
         data=df,
         x="Delay",
         y="Population correlation",
         hue="Trial result",
         style="Trial result",
-        ax=ax,
+        ax=ax[0],
     )
+    ax[0].set_title("CCA correlation")
+
+    sns.lineplot(
+        data=df2,
+        x="Delay",
+        y="Population correlation",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax[1],
+    )
+    ax[1].set_title("Rate correlation")
 
     smr.despine()
     return fig
@@ -393,7 +422,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
 
     ax = plt.add_subplot(2, 2, 4)
     sns.scatterplot(
-        df1[(df1["Delay"] == t)][:num * 2],
+        df1[(df1["Delay"] == t)][: num * 2],
         x=f"{region1} canonical dimension",
         y=f"{region2} canonical dimension",
         hue="Trial result",
