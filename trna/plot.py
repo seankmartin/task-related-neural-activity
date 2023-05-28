@@ -269,7 +269,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
 def plot_cca_correlation(recording_info, out_dir, n, regions):
     list_info = []
     for tu in recording_info:
-        correct, incorrect = tu["scikit"]["correct"], tu["scikit"]["incorrect"]
+        correct, incorrect = tu["correct"], tu["incorrect"]
         for trial in correct:
             delay = trial[0]
             cca = trial[1]
@@ -300,40 +300,86 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     return fig
 
 
-def plot_cca_example(recording_info, brain_regions, t=0):
+def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     list_info = []
-    p1_info = []
-    p2_info = []
-    info = recording_info["scikit"]
-    correct, incorrect = info["correct"], info["incorrect"]
+    p1_correct = []
+    p2_incorrect = []
+    p1_incorrect = []
+    p2_correct = []
+    info = recording_info
+    correct, incorrect = info["correct_rate"], info["incorrect_rate"]
+    per_trial_spikes = info["per_trial_spikes"]
     for i, trial in enumerate(correct):
         delay = trial[0]
         cca = trial[1]
-        list_info.append([delay, i, np.mean(cca[0]), np.mean(cca[1]), "Correct"])
-        original = trial[2]
-        p1_info.append(
-            [delay, i, np.mean(original[0][0]), np.mean(original[0][1]), "Correct"]
-        )
-        p2_info.append(
-            [delay, i, np.mean(original[1][0]), np.mean(original[1][1]), "Correct"]
-        )
+        list_info.append([delay, i, cca[0], cca[1], "Correct"])
+        region1_rate, region2_rate = trial[2]
+        if delay == t:
+            p1_correct.append(region1_rate[:3])
+            p2_correct.append(region2_rate[:3])
 
     for i, trial in enumerate(incorrect):
         delay = trial[0]
         cca = trial[1]
-        list_info.append([delay, i, np.mean(cca[0]), np.mean(cca[1]), "Incorrect"])
-        original = trial[2]
-        p1_info.append(
-            [delay, i, np.mean(original[0][0]), np.mean(original[0][1]), "Incorrect"]
-        )
-        p2_info.append(
-            [delay, i, np.mean(original[1][0]), np.mean(original[1][1]), "Incorrect"]
-        )
+        list_info.append([delay, i, cca[0], cca[1], "Incorrect"])
+        region1_rate, region2_rate = trial[2]
+        if delay == t:
+            p1_incorrect.append(region1_rate[:3])
+            p2_incorrect.append(region2_rate[:3])
 
     region1 = brain_regions[0]
     if isinstance(region1, list):
         region1 = region1[0][0]
     region2 = brain_regions[1]
+    if isinstance(region2, list):
+        region2 = region2[0][0]
+
+    fig = plt.figure()
+    smr.set_plot_style()
+    # Plot 1 and 2 - region1 and region2 average rates in 3d
+    ax = plt.add_subplot(2, 2, 1, projection="3d")
+    ax.set_title(f"{region1} average rates")
+    for p in p1_correct[:num]:
+        ax.plot(p, label=f"Correct", c="g", marker="o")
+    for p in p1_incorrect[:num]:
+        ax.plot(p, label=f"Incorrect", c="r", marker="x")
+    ax.set_xlabel("N1")
+    ax.set_ylabel("N2")
+    ax.set_zlabel("N3")
+    ax.legend()
+    smr.despine()
+
+    ax = plt.add_subplot(2, 2, 2, projection="3d")
+    ax.set_title(f"{region2} average rates")
+    for p in p2_correct[:num]:
+        ax.plot(p, label=f"Correct", c="g", marker="o")
+    for p in p2_incorrect[:num]:
+        ax.plot(p, label=f"Incorrect", c="r", marker="x")
+    ax.set_xlabel("N1")
+    ax.set_ylabel("N2")
+    ax.set_zlabel("N3")
+    ax.legend()
+    smr.despine()
+
+    # Plot 3 - spike rates in 2d
+    ax = plt.add_subplot(2, 2, 3)
+    for i, spike_train in per_trial_spikes[:num]:
+        for j, st in enumerate(spike_train):
+            st_to_plot = st + (j * win_len)
+            ax.plot(
+                st_to_plot,
+                j * np.ones_like(st_to_plot),
+                c="k",
+                marker=".",
+                markersize=1,
+            )
+            ax.vlines(win_len * j, 0, len(spike_train), color="r", linestyle="--")
+    ax.set_title("Spike trains")
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Spike index")
+    smr.despine()
+
+    # Plot 4 - cca in 2d of the two regions
     df1 = pd.DataFrame(
         list_info,
         columns=[
@@ -344,52 +390,15 @@ def plot_cca_example(recording_info, brain_regions, t=0):
             "Trial result",
         ],
     )
-    df2 = pd.DataFrame(
-        p1_info,
-        columns=[
-            "Delay",
-            "Trial number",
-            f"{region1} neuron 1",
-            f"{region1} neuron 2",
-            "Trial result",
-        ],
-    )
-    df3 = pd.DataFrame(
-        p2_info,
-        columns=[
-            "Delay",
-            "Trial number",
-            f"{region2} neuron 1",
-            f"{region2} neuron 2",
-            "Trial result",
-        ],
-    )
 
-    smr.set_plot_style()
-    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+    ax = plt.add_subplot(2, 2, 4)
     sns.scatterplot(
-        df1[(df1["Delay"] == t)][:30],
+        df1[(df1["Delay"] == t)][:num * 2],
         x=f"{region1} canonical dimension",
         y=f"{region2} canonical dimension",
         hue="Trial result",
         style="Trial result",
         ax=ax[0],
-    )
-    sns.scatterplot(
-        df2[(df2["Delay"] == t)][:30],
-        x=f"{region1} neuron 1",
-        y=f"{region1} neuron 2",
-        hue="Trial result",
-        style="Trial result",
-        ax=ax[1],
-    )
-    sns.scatterplot(
-        df3[(df3["Delay"] == t)][:30],
-        x=f"{region2} neuron 1",
-        y=f"{region2} neuron 2",
-        hue="Trial result",
-        style="Trial result",
-        ax=ax[2],
     )
 
     smr.despine()

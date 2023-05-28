@@ -9,6 +9,7 @@ from trna.common import (
     split_spikes_into_trials,
     regions_to_string,
     name_from_recording,
+    average_firing_rate,
 )
 
 from simuran.bridges.ibl_wide_bridge import IBLWideBridge
@@ -26,7 +27,6 @@ def analyse_single_recording(
     base_dir,
     brain_regions,
     t_range=21,
-    stack_method="hstack",
     filter_prop=None,
 ):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
@@ -68,6 +68,8 @@ def analyse_single_recording(
 
     correct = []
     incorrect = []
+    correct_rates = []
+    incorrect_rates = []
     per_trial_spikes1 = split_spikes_into_trials(
         spike_train1, trial_info["trial_times"], end_time=cca_window
     )
@@ -75,10 +77,9 @@ def analyse_single_recording(
         per_trial_spikes2 = split_spikes_into_trials(
             spike_train2, trial_info["trial_times"], end_time=cca_window, delay=t
         )
-        if stack_method == "vstack":
-            full_binned_spikes1 = []
-            full_binned_spikes2 = []
-            corrects = []
+        full_binned_spikes1 = []
+        full_binned_spikes2 = []
+        corrects = []
         for trial1, trial2, correct_ in zip(
             per_trial_spikes1, per_trial_spikes2, trial_info["trial_correct"]
         ):
@@ -91,36 +92,46 @@ def analyse_single_recording(
                     f"Skipping trial with no spikes in one of the regions at delay {t}"
                 )
                 continue
-            if stack_method == "hstack":
-                cca, X, Y = scikit_cca(binned_spikes1.T, binned_spikes2.T)
-                X = X.flatten()
-                Y = Y.flatten()
-                if correct_:
-                    correct.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
-                else:
-                    incorrect.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
+            cca, X, Y = scikit_cca(binned_spikes1.T, binned_spikes2.T)
+            X = X.flatten()
+            Y = Y.flatten()
+            if correct_:
+                correct.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
             else:
-                corrects.append(correct_)
-                full_binned_spikes1.append(binned_spikes1)
-                full_binned_spikes2.append(binned_spikes2)
-        if stack_method == "vstack":
-            cca, X, Y = scikit_cca(
-                np.concatenate(full_binned_spikes1, axis=1).T,
-                np.concatenate(full_binned_spikes2, axis=1).T,
-            )
-            start_size = full_binned_spikes1[0].shape[1]
-            for i, c in enumerate(corrects):
-                x = X[i * start_size : (i + 1) * start_size]
-                y = Y[i * start_size : (i + 1) * start_size]
-                binned_spikes1 = full_binned_spikes1[i]
-                binned_spikes2 = full_binned_spikes2[i]
-                if c:
-                    correct.append([t, [x, y], [binned_spikes1, binned_spikes2]])
-                else:
-                    incorrect.append([t, [x, y], [binned_spikes1, binned_spikes2]])
-
+                incorrect.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
+            average_firing_rate1 = average_firing_rate(binned_spikes1, cca_window)
+            average_firing_rate2 = average_firing_rate(binned_spikes2, cca_window)
+            corrects.append(correct_)
+            full_binned_spikes1.append(average_firing_rate1)
+            full_binned_spikes2.append(average_firing_rate2)
+        cca, X, Y = scikit_cca(
+            np.stack(full_binned_spikes1, axis=0),
+            np.stack(full_binned_spikes2, axis=0),
+        )
+        for i, c in enumerate(corrects):
+            binned_spikes1 = full_binned_spikes1[i]
+            binned_spikes2 = full_binned_spikes2[i]
+            if c:
+                correct_rates.append(
+                    [t, [X[i], Y[i]], [binned_spikes1, binned_spikes2]]
+                )
+            else:
+                incorrect_rates.append(
+                    [t, [X[i], Y[i]], [binned_spikes1, binned_spikes2]]
+                )
+    per_trial_spikes1 = split_spikes_into_trials(
+        spike_train1, trial_info["trial_times"], end_time=cca_window
+    )
+    per_trial_spikes2 = split_spikes_into_trials(
+        spike_train2, trial_info["trial_times"], end_time=cca_window
+    )
     info = {
-        "scikit": {"correct": correct, "incorrect": incorrect},
+        "correct": correct,
+        "incorrect": incorrect,
+        "trial_info": trial_info,
+        "correct_rates": correct_rates,
+        "incorrect_rates": incorrect_rates,
+        "per_trial_spikes": [per_trial_spikes1, per_trial_spikes2],
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir, bit="cca")
     with open(out_dir / f"cca_{regions_as_str}.txt", "w") as f:

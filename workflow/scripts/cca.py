@@ -1,4 +1,3 @@
-import shutil
 import pandas as pd
 from trna.allen import load_allen
 from trna.ibl import load_ibl
@@ -17,9 +16,9 @@ from simuran.loaders.allen_loader import BaseAllenLoader
 from simuran import set_only_log_to_file
 
 
-def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
+def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
     regions_as_str = regions_to_string(brain_regions)
-    fig = plot_cca_example(info, brain_regions)
+    fig = plot_cca_example(info, brain_regions, t=0, num=15, win_len=win_len)
     out_name = name_from_recording(
         recording, f"cca_example_{regions_as_str}.png", rel_dir=rel_dir
     )
@@ -63,7 +62,12 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             )
         if info is not None:
             plot_data(
-                recording, info, output_dir, regions, rel_dir=config[rel_dir_path]
+                recording,
+                info,
+                output_dir,
+                regions,
+                rel_dir=config[rel_dir_path],
+                win_len=config["cca_params"]["cca_window"],
             )
     all_info = []
     for i, recording in enumerate(recording_container):

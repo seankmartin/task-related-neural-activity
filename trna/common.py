@@ -14,6 +14,38 @@ def save_info_to_file(info, recording, out_dir, regions, rel_dir=None, bit="gpfa
         pickle.dump(info, f)
 
 
+def average_firing_rate(spike_train, trial_length=None):
+    """
+    Calculate the average firing rate for a spike train.
+
+    Parameters:
+    -----------
+    spike_train: Union[List, Dict]
+        The spike train to calculate the average firing rate for.
+
+    Returns:
+    --------
+    avg_firing_rates : np.ndarray
+        The average firing rate for the spike train.
+
+    """
+    average_firing_rates = np.zeros(len(spike_train))
+    if isinstance(spike_train, dict):
+        to_iter = spike_train.values()
+    else:
+        to_iter = spike_train
+    end_time = 0
+    start_time = 10000000000
+    if trial_length is None:
+        for st in to_iter:
+            start_time = min(start_time, st[0])
+            end_time = max(end_time, st[-1])
+        trial_length = end_time - start_time
+    for i, st in enumerate(to_iter):
+        average_firing_rates[i] = len(st) / trial_length
+    return average_firing_rates
+
+
 def load_data(recording, out_dir: "Path", regions, rel_dir=None, bit="gpfa"):
     name = recording.get_name_for_save(rel_dir=rel_dir)
     regions_as_str = regions_to_string(regions)
