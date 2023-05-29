@@ -291,15 +291,13 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
         for trial in correct_rates:
             delay = trial[0]
             rate = trial[1]
-            correlation_correct = np.corrcoef(rate[0], rate[1])[0, 1]
-            list_info.append([delay, correlation_correct, "Correct"])
+            list_info.append([delay, rate[0], rate[1], "Correct"])
         for trial in incorrect_rates:
             delay = trial[0]
             rate = trial[1]
-            correlation_correct = np.corrcoef(rate[0], rate[1])[0, 1]
-            list_info.append([delay, correlation_correct, "Incorrect"])
+            list_info.append([delay, rate[0], rate[1], "Incorrect"])
     df2 = pd.DataFrame(
-        list_info, columns=["Delay", "Population correlation", "Trial result"]
+        list_info, columns=["Delay", "Rate 1 reduced", "Rate 2 reduced", "Trial result"]
     )
     df2.to_csv(out_dir / f"rate_correlation{n}_{regions}.csv", index=False)
 
@@ -315,10 +313,10 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     )
     ax[0].set_title("CCA correlation")
 
-    sns.lineplot(
-        data=df2,
-        x="Delay",
-        y="Population correlation",
+    sns.scatterplot(
+        data=df2[df2["Delay"] == 0],
+        x="Rate 1 reduced",
+        y="Rate 2 reduced",
         hue="Trial result",
         style="Trial result",
         ax=ax[1],
