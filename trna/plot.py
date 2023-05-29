@@ -53,14 +53,14 @@ def plot_all_trajectories(correct, incorrect, elev=25, azim=-45):
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     for i in range(correct.shape[0])[:5]:
-        ax.plot(*correct[i], color="green", alpha=0.3, lw=1)
+        ax.plot(*correct[i], color="darkorange", alpha=0.3, lw=1)
     for i in range(incorrect.shape[0])[:5]:
-        ax.plot(*incorrect[i], color="red", alpha=0.3, lw=1)
+        ax.plot(*incorrect[i], color="darkblue", alpha=0.3, lw=1)
     ax.view_init(elev=elev, azim=azim)
 
     custom_lines = [
-        Line2D([0], [0], color="green", alpha=0.3, lw=1),
-        Line2D([0], [0], color="red", alpha=0.3, lw=1),
+        Line2D([0], [0], color="darkorange", alpha=0.3, lw=1),
+        Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
     ]
 
     ax.legend(
@@ -103,7 +103,7 @@ def plot_curves(
         average_trajectory_pass[1][0],
         average_trajectory_pass[2][0],
         "o",
-        color="green",
+        color="darkorange",
         label="Start (0.0s)",
     )
     ax.plot(
@@ -111,7 +111,7 @@ def plot_curves(
         average_trajectory_pass[1][-1],
         average_trajectory_pass[2][-1],
         "o",
-        color="red",
+        color="darkblue",
         label="End (1.0s)",
     )
     ax.plot(
@@ -119,14 +119,14 @@ def plot_curves(
         average_trajectory_fail[1][0],
         average_trajectory_fail[2][0],
         "o",
-        color="green",
+        color="darkorange",
     )
     ax.plot(
         average_trajectory_fail[0][-1],
         average_trajectory_fail[1][-1],
         average_trajectory_fail[2][-1],
         "o",
-        color="red",
+        color="darkblue",
     )
     if do_legend:
         ax.legend(bbox_to_anchor=(1.08, 1), loc="upper left", borderaxespad=0.0)
@@ -369,15 +369,15 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax = fig0.add_subplot(projection="3d")
     ax.set_title(f"{region1} average rates")
     for p in p1_correct[:num]:
-        ax.plot(*p, label=f"Correct", c="g", marker="o")
+        ax.plot(*p, label=f"Correct", c="darkorange", marker="o")
     for p in p1_incorrect[:num]:
-        ax.plot(*p, label=f"Incorrect", c="r", marker="x")
+        ax.plot(*p, label=f"Incorrect", c="darkblue", marker="x")
     ax.set_xlabel("N1")
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
     custom_lines = [
-        Line2D([0], [0], color="green", alpha=0.3, lw=1),
-        Line2D([0], [0], color="red", alpha=0.3, lw=1),
+        Line2D([0], [0], color="darkorange", alpha=0.3, lw=1),
+        Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
     ]
 
     ax.legend(
@@ -393,15 +393,15 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax = fig1.add_subplot(projection="3d")
     ax.set_title(f"{region2} average rates")
     for p in p2_correct[:num]:
-        ax.plot(*p, label=f"Correct", c="g", marker="o")
+        ax.plot(*p, label=f"Correct", c="darkorange", marker="o")
     for p in p2_incorrect[:num]:
-        ax.plot(*p, label=f"Incorrect", c="r", marker="x")
+        ax.plot(*p, label=f"Incorrect", c="darkblue", marker="x")
     ax.set_xlabel("N1")
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
     custom_lines = [
-        Line2D([0], [0], color="green", alpha=0.3, lw=1),
-        Line2D([0], [0], color="red", alpha=0.3, lw=1),
+        Line2D([0], [0], color="darkorange", alpha=0.3, lw=1),
+        Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
     ]
 
     ax.legend(
@@ -421,18 +421,18 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
             for k, st in enumerate(trial):
                 change = i * len(per_trial_spikes[0][0])
                 st_to_plot = np.array(st) + (j * win_len)
-                ax.plot(
+                ax.scatter(
                     st_to_plot,
                     k * np.ones_like(st_to_plot) + change,
+                    s=0.1,
                     c="k",
                     marker=".",
-                    markersize=0.1,
                 )
             if j != 0:
                 ax.vlines(
                     win_len * j,
                     change,
-                    len(trial),
+                    change + len(trial),
                     color="r",
                     linestyle="--",
                     linewidths=0.5,
@@ -441,13 +441,14 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
         len(per_trial_spikes[0][0]),
         0,
         win_len * num,
-        color="g",
+        color="r",
         linestyle="--",
         linewidths=0.5,
     )
     ax.set_title("Spike trains")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Spike index")
+    ax.invert_yaxis()
     smr.despine()
 
     # Plot 4 - cca in 2d of the two regions
@@ -463,14 +464,27 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     )
 
     fig3, ax = plt.subplots()
-    sns.scatterplot(
-        df1[(df1["Delay"] == t)][: num * 2],
-        x=f"{region1} canonical dimension",
-        y=f"{region2} canonical dimension",
-        hue="Trial result",
-        style="Trial result",
-        ax=ax,
+    correct = df1[(df1["Delay"] == t) & (df1["Trial result"] == "Correct")][:num]
+    incorrect = df1[(df1["Delay"] == t) & (df1["Trial result"] == "Incorrect")][:num]
+    ax.scatter(
+        correct[f"{region1} canonical dimension"],
+        correct[f"{region2} canonical dimension"],
+        c="darkorange",
+        marker="o",
+        label="Correct",
     )
+    ax.scatter(
+        incorrect[f"{region1} canonical dimension"],
+        incorrect[f"{region2} canonical dimension"],
+        c="darkblue",
+        marker="x",
+        label="Incorrect",
+    )
+    ax.set_title(f"CCA of {region1} and {region2}")
+    ax.set_xlabel(f"{region1} canonical dimension")
+    ax.set_ylabel(f"{region2} canonical dimension")
+    ax.legend()
+
     smr.despine()
 
     return {f"{region1}": fig0, f"{region2}": fig1, "spike_train": fig2, "cca": fig3}
