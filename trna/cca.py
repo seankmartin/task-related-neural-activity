@@ -104,6 +104,10 @@ def analyse_single_recording(
             corrects.append(correct_)
             full_binned_spikes1.append(average_firing_rate1)
             full_binned_spikes2.append(average_firing_rate2)
+        if len(full_binned_spikes1) == 0:
+            continue
+        if len(full_binned_spikes2) == 0:
+            continue
         cca, X, Y = scikit_cca(
             np.stack(full_binned_spikes1, axis=0),
             np.stack(full_binned_spikes2, axis=0),

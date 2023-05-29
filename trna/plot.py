@@ -363,10 +363,10 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     if isinstance(region2, list):
         region2 = region2[0][0]
 
-    fig = plt.figure(figsize=(30, 30))
     smr.set_plot_style()
     # Plot 1 and 2 - region1 and region2 average rates in 3d
-    ax = fig.add_subplot(2, 2, 1, projection="3d")
+    fig0 = plt.figure()
+    ax = fig0.add_subplot(projection="3d")
     ax.set_title(f"{region1} average rates")
     for p in p1_correct[:num]:
         ax.plot(*p, label=f"Correct", c="g", marker="o")
@@ -389,7 +389,8 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     )
     smr.despine()
 
-    ax = fig.add_subplot(2, 2, 2, projection="3d")
+    fig1 = plt.figure()
+    ax = fig1.add_subplot(projection="3d")
     ax.set_title(f"{region2} average rates")
     for p in p2_correct[:num]:
         ax.plot(*p, label=f"Correct", c="g", marker="o")
@@ -413,7 +414,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     smr.despine()
 
     # Plot 3 - spike rates in 2d
-    ax = fig.add_subplot(2, 2, 3)
+    fig2, ax = plt.subplots()
     num_raster_trials = num
     for i, region in enumerate(per_trial_spikes):
         for j, trial in enumerate(region[:num_raster_trials]):
@@ -461,7 +462,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
         ],
     )
 
-    ax = fig.add_subplot(2, 2, 4)
+    fig3, ax = plt.subplots()
     sns.scatterplot(
         df1[(df1["Delay"] == t)][: num * 2],
         x=f"{region1} canonical dimension",
@@ -470,8 +471,6 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
         style="Trial result",
         ax=ax,
     )
-
     smr.despine()
 
-    fig.tight_layout(pad=5.0)
-    return fig
+    return {f"{region1}": fig0, f"{region2}": fig1, "spike_train": fig2, "cca": fig3}

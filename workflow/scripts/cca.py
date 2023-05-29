@@ -18,12 +18,13 @@ from simuran import set_only_log_to_file
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
     regions_as_str = regions_to_string(brain_regions)
-    fig = plot_cca_example(info, brain_regions, t=0, num=15, win_len=win_len)
-    out_name = name_from_recording(
-        recording, f"cca_example_{regions_as_str}.png", rel_dir=rel_dir
-    )
-    fig = SimuranFigure(fig, str(out_dir / out_name))
-    fig.save()
+    figs = plot_cca_example(info, brain_regions, t=0, num=15, win_len=win_len)
+    for k, f in figs.items():
+        out_name = name_from_recording(
+            recording, f"cca_example_{regions_as_str}_{k}.png", rel_dir=rel_dir
+        )
+        fig = SimuranFigure(f, str(out_dir / out_name))
+        fig.save()
 
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
