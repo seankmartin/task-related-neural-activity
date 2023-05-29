@@ -341,7 +341,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     for i, trial in enumerate(correct):
         delay = trial[0]
         cca = trial[1]
-        list_info.append([delay, i, cca[0], cca[1], "Correct"])
+        list_info.append([delay, i, cca[0][0], cca[1][0], "Correct"])
         region1_rate, region2_rate = trial[2]
         if delay == t:
             p1_correct.append(region1_rate[:3])
@@ -350,7 +350,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     for i, trial in enumerate(incorrect):
         delay = trial[0]
         cca = trial[1]
-        list_info.append([delay, i, cca[0], cca[1], "Incorrect"])
+        list_info.append([delay, i, cca[0][0], cca[1][0], "Incorrect"])
         region1_rate, region2_rate = trial[2]
         if delay == t:
             p1_incorrect.append(region1_rate[:3])
@@ -363,49 +363,87 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     if isinstance(region2, list):
         region2 = region2[0][0]
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(30, 30))
     smr.set_plot_style()
     # Plot 1 and 2 - region1 and region2 average rates in 3d
     ax = fig.add_subplot(2, 2, 1, projection="3d")
     ax.set_title(f"{region1} average rates")
     for p in p1_correct[:num]:
-        ax.plot(p, label=f"Correct", c="g", marker="o")
+        ax.plot(*p, label=f"Correct", c="g", marker="o")
     for p in p1_incorrect[:num]:
-        ax.plot(p, label=f"Incorrect", c="r", marker="x")
+        ax.plot(*p, label=f"Incorrect", c="r", marker="x")
     ax.set_xlabel("N1")
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
-    ax.legend()
+    custom_lines = [
+        Line2D([0], [0], color="green", alpha=0.3, lw=1),
+        Line2D([0], [0], color="red", alpha=0.3, lw=1),
+    ]
+
+    ax.legend(
+        custom_lines,
+        ["Correct trials", "Incorrect trials"],
+        loc="upper left",
+        bbox_to_anchor=(1.08, 1.0),
+        borderaxespad=0.0,
+    )
     smr.despine()
 
     ax = fig.add_subplot(2, 2, 2, projection="3d")
     ax.set_title(f"{region2} average rates")
     for p in p2_correct[:num]:
-        ax.plot(p, label=f"Correct", c="g", marker="o")
+        ax.plot(*p, label=f"Correct", c="g", marker="o")
     for p in p2_incorrect[:num]:
-        ax.plot(p, label=f"Incorrect", c="r", marker="x")
+        ax.plot(*p, label=f"Incorrect", c="r", marker="x")
     ax.set_xlabel("N1")
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
-    ax.legend()
+    custom_lines = [
+        Line2D([0], [0], color="green", alpha=0.3, lw=1),
+        Line2D([0], [0], color="red", alpha=0.3, lw=1),
+    ]
+
+    ax.legend(
+        custom_lines,
+        ["Correct trials", "Incorrect trials"],
+        loc="upper left",
+        bbox_to_anchor=(1.08, 1.0),
+        borderaxespad=0.0,
+    )
     smr.despine()
 
     # Plot 3 - spike rates in 2d
     ax = fig.add_subplot(2, 2, 3)
+    num_raster_trials = num
     for i, region in enumerate(per_trial_spikes):
-        for trial in region[:num]:
-            for j, st in enumerate(trial):
+        for j, trial in enumerate(region[:num_raster_trials]):
+            for k, st in enumerate(trial):
                 change = i * len(per_trial_spikes[0][0])
                 st_to_plot = np.array(st) + (j * win_len)
                 ax.plot(
                     st_to_plot,
-                    j * np.ones_like(st_to_plot) + change,
+                    k * np.ones_like(st_to_plot) + change,
                     c="k",
                     marker=".",
-                    markersize=1,
+                    markersize=0.1,
                 )
-                ax.vlines(win_len * j, change, len(trial), color="r", linestyle="--")
-    ax.hlines(len(per_trial_spikes[0][0]), 0, win_len * num, color="r", linestyle="--")
+            if j != 0:
+                ax.vlines(
+                    win_len * j,
+                    change,
+                    len(trial),
+                    color="r",
+                    linestyle="--",
+                    linewidths=0.5,
+                )
+    ax.hlines(
+        len(per_trial_spikes[0][0]),
+        0,
+        win_len * num,
+        color="g",
+        linestyle="--",
+        linewidths=0.5,
+    )
     ax.set_title("Spike trains")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Spike index")
@@ -434,4 +472,6 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     )
 
     smr.despine()
+
+    fig.tight_layout(pad=5.0)
     return fig

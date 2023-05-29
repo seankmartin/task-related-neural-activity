@@ -26,7 +26,7 @@ def analyse_single_recording(
     out_dir,
     base_dir,
     brain_regions,
-    t_range=21,
+    t_range=20,
     filter_prop=None,
 ):
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
@@ -64,7 +64,7 @@ def analyse_single_recording(
     if t_range == 0:
         r = [0]
     else:
-        r = range(-t_range, t_range, 2)
+        r = range(-t_range, t_range + 1, 2)
 
     correct = []
     incorrect = []
@@ -99,8 +99,8 @@ def analyse_single_recording(
                 correct.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
             else:
                 incorrect.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
-            average_firing_rate1 = average_firing_rate(binned_spikes1, cca_window)
-            average_firing_rate2 = average_firing_rate(binned_spikes2, cca_window)
+            average_firing_rate1 = average_firing_rate(trial1, cca_window)
+            average_firing_rate2 = average_firing_rate(trial2, cca_window)
             corrects.append(correct_)
             full_binned_spikes1.append(average_firing_rate1)
             full_binned_spikes2.append(average_firing_rate2)
