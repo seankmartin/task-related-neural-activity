@@ -292,12 +292,12 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
             delay = trial[0]
             rate = trial[1]
             correlation_correct = np.corrcoef(rate[0], rate[1])[0, 1]
-            list_info.append([correlation_correct, "Correct"])
+            list_info.append([delay, correlation_correct, "Correct"])
         for trial in incorrect_rates:
             delay = trial[0]
             rate = trial[1]
             correlation_correct = np.corrcoef(rate[0], rate[1])[0, 1]
-            list_info.append([correlation_correct, "Incorrect"])
+            list_info.append([delay, correlation_correct, "Incorrect"])
     df2 = pd.DataFrame(
         list_info, columns=["Delay", "Population correlation", "Trial result"]
     )
