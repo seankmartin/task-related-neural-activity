@@ -291,11 +291,11 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
         for trial in correct_rates:
             delay = trial[0]
             rate = trial[1]
-            list_info.append([delay, rate[0], rate[1], "Correct"])
+            list_info.append([delay, rate[0][0], rate[1][0], "Correct"])
         for trial in incorrect_rates:
             delay = trial[0]
             rate = trial[1]
-            list_info.append([delay, rate[0], rate[1], "Incorrect"])
+            list_info.append([delay, rate[0][0], rate[1][0], "Incorrect"])
     df2 = pd.DataFrame(
         list_info, columns=["Delay", "Rate 1 reduced", "Rate 2 reduced", "Trial result"]
     )
@@ -318,7 +318,6 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
         x="Rate 1 reduced",
         y="Rate 2 reduced",
         hue="Trial result",
-        style="Trial result",
         ax=ax[1],
     )
     ax[1].set_title("Rate correlation")
