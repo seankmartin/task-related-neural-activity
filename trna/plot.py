@@ -336,7 +336,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     p1_incorrect = []
     p2_correct = []
     info = recording_info
-    correct, incorrect = info["correct_rate"], info["incorrect_rate"]
+    correct, incorrect = info["correct_rates"], info["incorrect_rates"]
     per_trial_spikes = info["per_trial_spikes"]
     for i, trial in enumerate(correct):
         delay = trial[0]
@@ -366,7 +366,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     fig = plt.figure()
     smr.set_plot_style()
     # Plot 1 and 2 - region1 and region2 average rates in 3d
-    ax = plt.add_subplot(2, 2, 1, projection="3d")
+    ax = fig.add_subplot(2, 2, 1, projection="3d")
     ax.set_title(f"{region1} average rates")
     for p in p1_correct[:num]:
         ax.plot(p, label=f"Correct", c="g", marker="o")
@@ -378,7 +378,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax.legend()
     smr.despine()
 
-    ax = plt.add_subplot(2, 2, 2, projection="3d")
+    ax = fig.add_subplot(2, 2, 2, projection="3d")
     ax.set_title(f"{region2} average rates")
     for p in p2_correct[:num]:
         ax.plot(p, label=f"Correct", c="g", marker="o")
@@ -391,18 +391,21 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     smr.despine()
 
     # Plot 3 - spike rates in 2d
-    ax = plt.add_subplot(2, 2, 3)
-    for i, spike_train in per_trial_spikes[:num]:
-        for j, st in enumerate(spike_train):
-            st_to_plot = st + (j * win_len)
-            ax.plot(
-                st_to_plot,
-                j * np.ones_like(st_to_plot),
-                c="k",
-                marker=".",
-                markersize=1,
-            )
-            ax.vlines(win_len * j, 0, len(spike_train), color="r", linestyle="--")
+    ax = fig.add_subplot(2, 2, 3)
+    for i, region in enumerate(per_trial_spikes):
+        for trial in region[:num]:
+            for j, st in enumerate(trial):
+                change = i * len(per_trial_spikes[0][0])
+                st_to_plot = np.array(st) + (j * win_len)
+                ax.plot(
+                    st_to_plot,
+                    j * np.ones_like(st_to_plot) + change,
+                    c="k",
+                    marker=".",
+                    markersize=1,
+                )
+                ax.vlines(win_len * j, change, len(trial), color="r", linestyle="--")
+    ax.hlines(len(per_trial_spikes[0][0]), 0, win_len * num, color="r", linestyle="--")
     ax.set_title("Spike trains")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Spike index")
@@ -420,14 +423,14 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
         ],
     )
 
-    ax = plt.add_subplot(2, 2, 4)
+    ax = fig.add_subplot(2, 2, 4)
     sns.scatterplot(
         df1[(df1["Delay"] == t)][: num * 2],
         x=f"{region1} canonical dimension",
         y=f"{region2} canonical dimension",
         hue="Trial result",
         style="Trial result",
-        ax=ax[0],
+        ax=ax,
     )
 
     smr.despine()
