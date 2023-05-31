@@ -269,8 +269,8 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
 def plot_cca_correlation(recording_info, out_dir, n, regions):
     list_info = []
     for tu in recording_info:
-        correct = tu["per_trial_corr_info_correct"]
-        incorrect = tu["per_trial_corr_info_incorrect"]
+        correct = tu["unsplit_corr_info_correct"]
+        incorrect = tu["unsplit_corr_info_incorrect"]
         for trial in correct:
             list_info.append([*trial, "Correct"])
         for trial in incorrect:

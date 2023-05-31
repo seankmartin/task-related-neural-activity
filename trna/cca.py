@@ -75,6 +75,9 @@ def analyse_single_recording(
     incorrect_rates = []
     correct_corr_info = []
     incorrect_corr_info = []
+    unsplit_corr_info_correct = []
+    unsplit_corr_info_incorrect = []
+    for_concat = [[], []]
     per_trial_spikes1 = split_spikes_into_trials(
         spike_train1, trial_info["trial_times"], end_time=cca_window
     )
@@ -105,6 +108,8 @@ def analyse_single_recording(
             else:
                 incorrect.append([t, [X, Y], [binned_spikes1, binned_spikes2]])
                 per_trial_corr_info_incorrect.append([t, find_correlation(X, Y)])
+            for_concat[0].append(binned_spikes1.T)
+            for_concat[1].append(binned_spikes2.T)
 
             # Method 3 - average firing rate CCA
             average_firing_rate1 = average_firing_rate(trial1, cca_window)
@@ -135,6 +140,18 @@ def analyse_single_recording(
                 )
 
         # Method 2 - stacked CCA
+        full_stacked = np.concatenate(for_concat[0], axis=0)
+        full_stacked2 = np.concatenate(for_concat[1], axis=0)
+        data_per_trial = int(cca_window / cca_bin_size)
+        num_trials = int(len(full_stacked) / data_per_trial)
+        cca, X, Y = scikit_cca(full_stacked, full_stacked2)
+        corr = find_correlations(X, Y, num_trials, data_per_trial)
+        for c, correct_ in zip(corr, corrects):
+            if correct_:
+                unsplit_corr_info_correct.append([t, c])
+            else:
+                unsplit_corr_info_incorrect.append([t, c])
+
         correct_concat1 = np.concatenate(
             [c[2][0].T for c in correct if c[0] == t], axis=0
         )
@@ -174,6 +191,8 @@ def analyse_single_recording(
         "per_trial_corr_info_incorrect": per_trial_corr_info_incorrect,
         "concat_correct_corr_info": correct_corr_info,
         "concat_incorrect_corr_info": incorrect_corr_info,
+        "unsplit_corr_info_correct": unsplit_corr_info_correct,
+        "unsplit_corr_info_incorrect": unsplit_corr_info_incorrect,
         "per_trial_spikes": [per_trial_spikes1, per_trial_spikes2],
         "trial_info": trial_info,
     }
