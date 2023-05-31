@@ -89,12 +89,13 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             all_info.append(info)
     print(f"Analysed {len(all_info)} recordings with sufficient units")
     output_dir = config["output_dir"] / "cca"
-    fig = plot_cca_correlation(all_info, output_dir, n, regions)
     regions_st = regions_to_string(regions)
-    sm_fig = SimuranFigure(
-        fig, str(output_dir / f"{n}_{regions_st}_cca_correlation.png")
-    )
-    sm_fig.save()
+    figs = plot_cca_correlation(all_info, output_dir, n, regions_st)
+    for k, fig in figs.items():
+        sm_fig = SimuranFigure(
+            fig, str(output_dir / f"{n}_{regions_st}_{k}_cca_correlation.png")
+        )
+        sm_fig.save()
 
     return all_info
 

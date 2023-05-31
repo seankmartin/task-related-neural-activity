@@ -53,13 +53,13 @@ def plot_all_trajectories(correct, incorrect, elev=25, azim=-45):
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     for i in range(correct.shape[0])[:5]:
-        ax.plot(*correct[i], color="darkorange", alpha=0.3, lw=1)
+        ax.plot(*correct[i], color="sienna", alpha=0.3, lw=1)
     for i in range(incorrect.shape[0])[:5]:
         ax.plot(*incorrect[i], color="darkblue", alpha=0.3, lw=1)
     ax.view_init(elev=elev, azim=azim)
 
     custom_lines = [
-        Line2D([0], [0], color="darkorange", alpha=0.3, lw=1),
+        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
         Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
     ]
 
@@ -103,7 +103,7 @@ def plot_curves(
         average_trajectory_pass[1][0],
         average_trajectory_pass[2][0],
         "o",
-        color="darkorange",
+        color="sienna",
         label="Start (0.0s)",
     )
     ax.plot(
@@ -119,7 +119,7 @@ def plot_curves(
         average_trajectory_fail[1][0],
         average_trajectory_fail[2][0],
         "o",
-        color="darkorange",
+        color="sienna",
     )
     ax.plot(
         average_trajectory_fail[0][-1],
@@ -269,21 +269,16 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
 def plot_cca_correlation(recording_info, out_dir, n, regions):
     list_info = []
     for tu in recording_info:
-        correct, incorrect = tu["correct"], tu["incorrect"]
+        correct = tu["per_trial_corr_info_correct"]
+        incorrect = tu["per_trial_corr_info_incorrect"]
         for trial in correct:
-            delay = trial[0]
-            cca = trial[1]
-            correlation = np.corrcoef(cca[0], cca[1])[0, 1]
-            list_info.append([delay, correlation, "Correct"])
+            list_info.append([*trial, "Correct"])
         for trial in incorrect:
-            delay = trial[0]
-            cca = trial[1]
-            correlation = np.corrcoef(cca[0], cca[1])[0, 1]
-            list_info.append([delay, correlation, "Incorrect"])
+            list_info.append([*trial, "Incorrect"])
     df = pd.DataFrame(
         list_info, columns=["Delay", "Population correlation", "Trial result"]
     )
-    df.to_csv(out_dir / f"cca_correlation{n}_{regions}.csv", index=False)
+    df.to_csv(out_dir / f"cca_correlation_{n}_{regions}.csv", index=False)
 
     list_info = []
     for tu in recording_info:
@@ -291,39 +286,94 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
         for trial in correct_rates:
             delay = trial[0]
             rate = trial[1]
-            list_info.append([delay, rate[0][0], rate[1][0], "Correct"])
+            per_neuron_rate = trial[2]
+            list_info.append(
+                [
+                    delay,
+                    rate[0],
+                    rate[1],
+                    np.mean(per_neuron_rate[0]),
+                    np.mean(per_neuron_rate[1]),
+                    "Correct",
+                ]
+            )
         for trial in incorrect_rates:
             delay = trial[0]
             rate = trial[1]
-            list_info.append([delay, rate[0][0], rate[1][0], "Incorrect"])
+            per_neuron_rate = trial[2]
+            list_info.append(
+                [
+                    delay,
+                    rate[0],
+                    rate[1],
+                    np.mean(per_neuron_rate[0]),
+                    np.mean(per_neuron_rate[1]),
+                    "Incorrect",
+                ]
+            )
     df2 = pd.DataFrame(
-        list_info, columns=["Delay", "Rate 1 reduced", "Rate 2 reduced", "Trial result"]
+        list_info,
+        columns=[
+            "Delay",
+            "Rate 1 reduced",
+            "Rate 2 reduced",
+            "Average rate 1",
+            "Average rate 2",
+            "Trial result",
+        ],
     )
-    df2.to_csv(out_dir / f"rate_correlation{n}_{regions}.csv", index=False)
+    df2.to_csv(out_dir / f"rate_correlation_{n}_{regions}.csv", index=False)
+
+    list_info = []
+    for tu in recording_info:
+        correct = tu["concat_correct_corr_info"]
+        incorrect = tu["concat_incorrect_corr_info"]
+        for trial in correct:
+            list_info.append([*trial, "Correct"])
+        for trial in incorrect:
+            list_info.append([*trial, "Incorrect"])
+    df3 = pd.DataFrame(
+        list_info, columns=["Delay", "Population correlation", "Trial result"]
+    )
+    df3.to_csv(out_dir / f"concat_cca_correlation_{n}_{regions}.csv", index=False)
 
     smr.set_plot_style()
-    fig, ax = plt.subplots(2, 1)
+    fig1, ax = plt.subplots()
     sns.lineplot(
         data=df,
         x="Delay",
         y="Population correlation",
         hue="Trial result",
         style="Trial result",
-        ax=ax[0],
+        ax=ax,
     )
-    ax[0].set_title("CCA correlation")
+    ax.set_title("CCA correlation")
 
-    sns.scatterplot(
+    fig2 = sns.lmplot(
         data=df2[df2["Delay"] == 0],
-        x="Rate 1 reduced",
-        y="Rate 2 reduced",
+        x="Average rate 1",
+        y="Average rate 2",
         hue="Trial result",
-        ax=ax[1],
+        markers=["o", "x"],
     )
-    ax[1].set_title("Rate correlation")
+
+    fig3, ax = plt.subplots()
+    sns.lineplot(
+        data=df3,
+        x="Delay",
+        y="Population correlation",
+        hue="Trial result",
+        style="Trial result",
+        ax=ax,
+    )
+    ax.set_title("Concatenated CCA correlation")
 
     smr.despine()
-    return fig
+    return {
+        "per_trial": fig1,
+        "rate_based": fig2,
+        "concat": fig3,
+    }
 
 
 def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
@@ -335,23 +385,34 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     info = recording_info
     correct, incorrect = info["correct_rates"], info["incorrect_rates"]
     per_trial_spikes = info["per_trial_spikes"]
+    indices_to_get1 = []
+    indices_to_get2 = []
+    for i, trial in enumerate(correct):
+        region1_rate, region2_rate = trial[2]
+        for j, val in enumerate(region1_rate):
+            if val > 0 and len(indices_to_get1) < 3:
+                indices_to_get1.append(j)
+        for j, val in enumerate(region2_rate):
+            if val > 0 and len(indices_to_get2) < 3:
+                indices_to_get2.append(j)
+
     for i, trial in enumerate(correct):
         delay = trial[0]
         cca = trial[1]
-        list_info.append([delay, i, cca[0][0], cca[1][0], "Correct"])
+        list_info.append([delay, i, cca[0], cca[1], "Correct"])
         region1_rate, region2_rate = trial[2]
         if delay == t:
-            p1_correct.append(region1_rate[:3])
-            p2_correct.append(region2_rate[:3])
+            p1_correct.append(region1_rate[indices_to_get1])
+            p2_correct.append(region2_rate[indices_to_get2])
 
     for i, trial in enumerate(incorrect):
         delay = trial[0]
         cca = trial[1]
-        list_info.append([delay, i, cca[0][0], cca[1][0], "Incorrect"])
+        list_info.append([delay, i, cca[0], cca[1], "Incorrect"])
         region1_rate, region2_rate = trial[2]
         if delay == t:
-            p1_incorrect.append(region1_rate[:3])
-            p2_incorrect.append(region2_rate[:3])
+            p1_incorrect.append(region1_rate[indices_to_get1])
+            p2_incorrect.append(region2_rate[indices_to_get2])
 
     region1 = brain_regions[0]
     if isinstance(region1, list):
@@ -366,14 +427,14 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax = fig0.add_subplot(projection="3d")
     ax.set_title(f"{region1} average rates")
     for p in p1_correct[:num]:
-        ax.plot(*p, label=f"Correct", c="darkorange", marker="o")
+        ax.plot(*p, label=f"Correct", c="sienna", marker="o")
     for p in p1_incorrect[:num]:
         ax.plot(*p, label=f"Incorrect", c="darkblue", marker="x")
     ax.set_xlabel("N1")
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
     custom_lines = [
-        Line2D([0], [0], color="darkorange", alpha=0.3, lw=1),
+        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
         Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
     ]
 
@@ -390,14 +451,14 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax = fig1.add_subplot(projection="3d")
     ax.set_title(f"{region2} average rates")
     for p in p2_correct[:num]:
-        ax.plot(*p, label=f"Correct", c="darkorange", marker="o")
+        ax.plot(*p, label=f"Correct", c="sienna", marker="o")
     for p in p2_incorrect[:num]:
         ax.plot(*p, label=f"Incorrect", c="darkblue", marker="x")
     ax.set_xlabel("N1")
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
     custom_lines = [
-        Line2D([0], [0], color="darkorange", alpha=0.3, lw=1),
+        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
         Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
     ]
 
@@ -466,7 +527,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax.scatter(
         correct[f"{region1} canonical dimension"],
         correct[f"{region2} canonical dimension"],
-        c="darkorange",
+        c="sienna",
         marker="o",
         label="Correct",
     )

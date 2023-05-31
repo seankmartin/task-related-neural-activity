@@ -1,4 +1,5 @@
 """Dimension reduction functions"""
+import numpy as np
 import quantities as pq
 
 
@@ -70,7 +71,7 @@ def scikit_fa(trial_rates, n_components=3):
     return fa, X
 
 
-def scikit_cca(trial_rates1, trial_rates2, n_components=1):
+def scikit_cca(trial_rates1, trial_rates2, cca=None, fit=True):
     """
     Perform CCA on the spike trains.
 
@@ -80,8 +81,10 @@ def scikit_cca(trial_rates1, trial_rates2, n_components=1):
         The spike rates for the first set of neurons.
     trial_rates2: np.ndarray
         The spike rates for the second set of neurons.
-    n_components: int
-        Number of dimensions to use.
+    cca: sklearn.cross_decomposition.CCA
+        The CCA object to use.
+    fit: bool
+        Whether to fit the CCA object.
 
     Returns:
     --------
@@ -95,7 +98,47 @@ def scikit_cca(trial_rates1, trial_rates2, n_components=1):
     """
     from sklearn.cross_decomposition import CCA
 
-    cca = CCA(n_components=n_components)
-    X, Y = cca.fit_transform(trial_rates1, trial_rates2)
+    if cca is None:
+        cca = CCA(n_components=1)
+    if fit:
+        cca.fit(trial_rates1, trial_rates2)
+    X, Y = cca.transform(trial_rates1, trial_rates2)
+    X = X.squeeze()
+    Y = Y.squeeze()
 
     return cca, X, Y
+
+
+def find_correlation(X, Y):
+    if len(X.shape) == 1:
+        return np.corrcoef(X, Y)[0, 1]
+    else:
+        return np.array(
+            [np.corrcoef(X[:, v], Y[:, v])[0, 1] for v in range(X.shape[1])]
+        )
+
+
+def manual_cca_transform(X_, Y_, cca):
+    rotation_x = cca.x_rotations_
+    rotation_y = cca.y_rotations_
+
+    scale_x = X_.std(axis=0, ddof=1)
+    scale_y = Y_.std(axis=0, ddof=1)
+    scale_x[scale_x == 0.0] = 1
+    scale_y[scale_y == 0.0] = 1
+    scaled_X = (X_ - X_.mean(axis=0)) / scale_x
+    scaled_Y = (Y_ - Y_.mean(axis=0)) / scale_y
+
+    Xt = np.dot(scaled_X, rotation_x)
+    Yt = np.dot(scaled_Y, rotation_y)
+
+    return Xt.squeeze(), Yt.squeeze()
+
+
+def find_correlations(X, Y, num_trials, data_per_trial):
+    correlations = []
+    for i in range(num_trials):
+        start = i * data_per_trial
+        end = start + data_per_trial
+        correlations.append(find_correlation(X[start:end], Y[start:end]))
+    return correlations
