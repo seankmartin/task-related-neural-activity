@@ -1,7 +1,12 @@
 import pandas as pd
 from trna.allen import load_allen
 from trna.ibl import load_ibl
-from trna.plot import simple_trajectory_plot, plot_gpfa_distance
+from trna.plot import (
+    simple_trajectory_plot,
+    plot_gpfa_distance,
+    plot_all_trajectories,
+    plot_trajectories_split,
+)
 from trna.common import (
     regions_to_string,
     name_from_recording,
@@ -24,6 +29,18 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
         fig = simple_trajectory_plot(correct, incorrect)
         out_name = name_from_recording(
             recording, f"gpfa_{key}_{regions_as_str}.png", rel_dir=rel_dir
+        )
+        fig = SimuranFigure(fig, str(out_dir / out_name))
+        fig.save()
+        fig = plot_all_trajectories(correct, incorrect)
+        out_name = name_from_recording(
+            recording, f"gpfa_all_{key}_{regions_as_str}.png", rel_dir=rel_dir
+        )
+        fig = SimuranFigure(fig, str(out_dir / out_name))
+        fig.save()
+        fig = plot_trajectories_split(correct, incorrect)
+        out_name = name_from_recording(
+            recording, f"gpfa_split_{key}_{regions_as_str}.png", rel_dir=rel_dir
         )
         fig = SimuranFigure(fig, str(out_dir / out_name))
         fig.save()
@@ -80,7 +97,6 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
                 f"No pickle data found for {recording.get_name_for_save(rel_dir=config[rel_dir_path])}"
             )
         elif info is not None:
-            info["name"] = recording.get_name_for_save(rel_dir=config[rel_dir_path])
             all_info.append(info)
     print(f"Analysed {len(all_info)} recordings with sufficient units")
     output_dir = config["output_dir"] / "gpfa"

@@ -85,7 +85,9 @@ def analyse_single_recording(
     # )
 
     info = {
-        "elephant": {"correct": correct, "incorrect": incorrect},
+        "correct": correct,
+        "incorrect": incorrect,
+        "name": recording.get_name_for_save(rel_dir=base_dir)
         # "scikit_fa": {"correct": fa_correct, "incorrect": fa_incorrect},
     }
     save_info_to_file(info, recording, out_dir, brain_regions, rel_dir, bit="gpfa")

@@ -30,7 +30,7 @@ def simple_trajectory_plot(correct, incorrect):
     return fig
 
 
-def plot_all_trajectories(correct, incorrect, elev=25, azim=-45):
+def plot_all_trajectories(correct, incorrect, elev=25, azim=-45, num=200):
     """
     Plot all the trajectories for correct and incorrect trials.
 
@@ -52,24 +52,69 @@ def plot_all_trajectories(correct, incorrect, elev=25, azim=-45):
     ax.set_ylabel("z")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    for i in range(correct.shape[0])[:5]:
-        ax.plot(*correct[i], color="sienna", alpha=0.3, lw=1)
-    for i in range(incorrect.shape[0])[:5]:
-        ax.plot(*incorrect[i], color="darkblue", alpha=0.3, lw=1)
+    num1 = min(num, correct.shape[0])
+    num2 = min(num, incorrect.shape[0])
+    for i in range(num1):
+        ax.plot(*correct[i], color="darkblue", alpha=0.3, lw=1)
+    for i in range(num2):
+        ax.plot(*incorrect[i], color="sienna", alpha=0.3, lw=1)
     ax.view_init(elev=elev, azim=azim)
 
     custom_lines = [
-        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
         Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
+        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
     ]
 
     ax.legend(
         custom_lines,
-        ["Correct trials", "Incorrect trials"],
+        ["Catch trials", "Miss trials"],
         loc="upper left",
         bbox_to_anchor=(1.08, 1.0),
         borderaxespad=0.0,
     )
+    smr.despine()
+    return fig
+
+
+def plot_trajectories_split(correct, incorrect, elev=25, azim=-45, num=200):
+    """
+    Plot the average trajectory for correct and incorrect trials.
+
+    Parameters:
+    -----------
+    correct: np.ndarray
+        The trajectories of the neurons with GPFA applied for correct trials.
+    incorrect: np.ndarray
+        The trajectories of the neurons with GPFA applied for incorrect trials.
+
+    Returns:
+    --------
+    figure: matplotlib.figure.Figure
+
+    """
+    smr.set_plot_style()
+    fig = plt.figure(figsize=plt.figaspect(1.5))
+    ax = fig.add_subplot(2, 1, 1, projection="3d")
+    ax.set_ylabel("z")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Catch trials")
+    ax.view_init(elev=elev, azim=azim)
+    num1 = min(num, correct.shape[0])
+    num2 = min(num, incorrect.shape[0])
+    for i in range(num1):
+        ax.plot(*correct[i], color="darkblue", alpha=0.3, lw=1)
+    smr.despine()
+
+    ax = fig.add_subplot(2, 1, 2, projection="3d")
+    ax.set_ylabel("z")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Miss trials")
+    ax.view_init(elev=elev, azim=azim)
+    for i in range(num2):
+        ax.plot(*incorrect[i], color="sienna", alpha=0.3, lw=1)
+
     smr.despine()
     return fig
 
@@ -103,7 +148,7 @@ def plot_curves(
         average_trajectory_pass[1][0],
         average_trajectory_pass[2][0],
         "o",
-        color="sienna",
+        color="seagreen",
         label="Start (0.0s)",
     )
     ax.plot(
@@ -111,7 +156,7 @@ def plot_curves(
         average_trajectory_pass[1][-1],
         average_trajectory_pass[2][-1],
         "o",
-        color="darkblue",
+        color="maroon",
         label="End (1.0s)",
     )
     ax.plot(
@@ -119,14 +164,14 @@ def plot_curves(
         average_trajectory_fail[1][0],
         average_trajectory_fail[2][0],
         "o",
-        color="sienna",
+        color="seagreen",
     )
     ax.plot(
         average_trajectory_fail[0][-1],
         average_trajectory_fail[1][-1],
         average_trajectory_fail[2][-1],
         "o",
-        color="darkblue",
+        color="maroon",
     )
     if do_legend:
         ax.legend(bbox_to_anchor=(1.08, 1), loc="upper left", borderaxespad=0.0)
@@ -156,8 +201,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     list_info = []
     l2_info = []
     for tu in recording_info:
-        item = tu["elephant"]
-        correct, incorrect = item["correct"], item["incorrect"]
+        correct, incorrect = tu["correct"], tu["incorrect"]
         average_trajectory_pass = np.mean(correct, axis=0)
         average_trajectory_fail = np.mean(incorrect, axis=0)
 
