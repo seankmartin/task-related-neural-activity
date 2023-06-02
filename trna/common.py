@@ -235,4 +235,4 @@ def write_config(cfg_file, cfg, output_location):
     if cfg_file is not None:
         shutil.copy(cfg_file, output_location)
     else:
-        shutil.write(output_location)
+        cfg.write(output_location)

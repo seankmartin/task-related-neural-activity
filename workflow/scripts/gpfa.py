@@ -167,7 +167,7 @@ def main(main_config, brain_table_location, overwrite=False):
                 brain_regions=[brain_region],
             )
 
-    write_config(main_config, config, config["output_dir"] / "gpfa" / "config.yaml")
+    write_config(None, config, config["output_dir"] / "gpfa" / "config.yaml")
 
 
 if __name__ == "__main__":
