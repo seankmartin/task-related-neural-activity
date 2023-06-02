@@ -125,7 +125,7 @@ def main(main_config, brain_table_location, overwrite=False):
             config["ibl_data_dir"], brain_table, brain_region_pair
         )
         print(
-            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {config['ibl_brain_regions']}"
+            f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {brain_region_pair}"
         )
         analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
 
