@@ -23,27 +23,26 @@ from simuran import set_only_log_to_file
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None):
     regions_as_str = regions_to_string(brain_regions)
-    for key, value in info.items():
-        correct = value["correct"]
-        incorrect = value["incorrect"]
-        fig = simple_trajectory_plot(correct, incorrect)
-        out_name = name_from_recording(
-            recording, f"gpfa_{key}_{regions_as_str}.png", rel_dir=rel_dir
-        )
-        fig = SimuranFigure(fig, str(out_dir / out_name))
-        fig.save()
-        fig = plot_all_trajectories(correct, incorrect)
-        out_name = name_from_recording(
-            recording, f"gpfa_all_{key}_{regions_as_str}.png", rel_dir=rel_dir
-        )
-        fig = SimuranFigure(fig, str(out_dir / out_name))
-        fig.save()
-        fig = plot_trajectories_split(correct, incorrect)
-        out_name = name_from_recording(
-            recording, f"gpfa_split_{key}_{regions_as_str}.png", rel_dir=rel_dir
-        )
-        fig = SimuranFigure(fig, str(out_dir / out_name))
-        fig.save()
+    correct = info["correct"]
+    incorrect = info["incorrect"]
+    fig = simple_trajectory_plot(correct, incorrect)
+    out_name = name_from_recording(
+        recording, f"gpfa_{regions_as_str}.png", rel_dir=rel_dir
+    )
+    fig = SimuranFigure(fig, str(out_dir / out_name))
+    fig.save()
+    fig = plot_all_trajectories(correct, incorrect)
+    out_name = name_from_recording(
+        recording, f"gpfa_all_{regions_as_str}.png", rel_dir=rel_dir
+    )
+    fig = SimuranFigure(fig, str(out_dir / out_name))
+    fig.save()
+    fig = plot_trajectories_split(correct, incorrect)
+    out_name = name_from_recording(
+        recording, f"gpfa_split_{regions_as_str}.png", rel_dir=rel_dir
+    )
+    fig = SimuranFigure(fig, str(out_dir / out_name))
+    fig.save()
 
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
