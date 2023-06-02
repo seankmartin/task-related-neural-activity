@@ -129,7 +129,7 @@ def main(main_config, brain_table_location, overwrite=False):
         )
         analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
 
-    write_config(main_config, config, config["output_dir"] / "cca" / "config.yaml")
+    write_config(None, config, config["output_dir"] / "cca" / "config.yaml")
 
 
 if __name__ == "__main__":
