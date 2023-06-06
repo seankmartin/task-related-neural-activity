@@ -395,13 +395,16 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     )
     ax.set_title("CCA correlation")
 
-    fig2 = sns.lmplot(
-        data=df2[df2["Delay"] == 0],
-        x="Average rate 1",
-        y="Average rate 2",
-        hue="Trial result",
-        markers=["o", "x"],
-    )
+    if len(df2[df2["Delay"] == 0]) == 0:
+        fig2 = None
+    else:
+        fig2 = sns.lmplot(
+            data=df2[df2["Delay"] == 0],
+            x="Average rate 1",
+            y="Average rate 2",
+            hue="Trial result",
+            markers=["o", "x"],
+        )
 
     fig3, ax = plt.subplots()
     sns.lineplot(
@@ -522,8 +525,8 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     num_raster_trials = num
     for i, region in enumerate(per_trial_spikes):
         for j, trial in enumerate(region[:num_raster_trials]):
+            change = i * len(per_trial_spikes[0][0])
             for k, st in enumerate(trial):
-                change = i * len(per_trial_spikes[0][0])
                 st_to_plot = np.array(st) + (j * win_len)
                 ax.scatter(
                     st_to_plot,

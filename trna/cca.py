@@ -40,9 +40,13 @@ def analyse_single_recording(
         if is_allen
         else IBLWideBridge(good_unit_properties=filter_prop)
     )
-    region1, region2 = brain_regions
-    unit_table1, spike_train1 = bridge.spike_train(recording, brain_regions=[region1])
-    unit_table2, spike_train2 = bridge.spike_train(recording, brain_regions=[region2])
+    if len(brain_regions) != 2:
+        region1 = brain_regions[:-1]
+        region2 = [brain_regions[-1]]
+    else:
+        region1, region2 = [brain_regions[0]], [brain_regions[1]]
+    unit_table1, spike_train1 = bridge.spike_train(recording, brain_regions=region1)
+    unit_table2, spike_train2 = bridge.spike_train(recording, brain_regions=region2)
     unit_table = pd.concat([unit_table1, unit_table2])
     regions_as_str = regions_to_string(brain_regions)
     trial_info = bridge.trial_info(recording)

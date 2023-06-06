@@ -20,6 +20,8 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
     regions_as_str = regions_to_string(brain_regions)
     figs = plot_cca_example(info, brain_regions, t=0, num=15, win_len=win_len)
     for k, f in figs.items():
+        if f is None:
+            continue
         out_name = name_from_recording(
             recording, f"cca_example_{regions_as_str}_{k}.png", rel_dir=rel_dir
         )
@@ -92,6 +94,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     regions_st = regions_to_string(regions)
     figs = plot_cca_correlation(all_info, output_dir, n, regions_st)
     for k, fig in figs.items():
+        if fig is None:
+            continue
         sm_fig = SimuranFigure(
             fig, str(output_dir / f"{n}_{regions_st}_{k}_cca_correlation.png")
         )
@@ -127,6 +131,8 @@ def main(main_config, brain_table_location, overwrite=False):
         print(
             f"Loaded {len(ibl_recording_container)} recordings from IBL with brain regions {brain_region_pair}"
         )
+        if len(ibl_recording_container) == 0:
+            continue
         analyse_container(overwrite, config, ibl_recording_container, brain_region_pair)
 
     write_config(None, config, config["output_dir"] / "cca" / "config.yaml")
