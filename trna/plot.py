@@ -49,7 +49,7 @@ def plot_all_trajectories(correct, incorrect, elev=25, azim=-45, num=200):
     smr.set_plot_style()
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
-    ax.set_ylabel("z")
+    ax.set_zlabel("z")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     num1 = min(num, correct.shape[0])
@@ -95,7 +95,7 @@ def plot_trajectories_split(correct, incorrect, elev=25, azim=-45, num=200):
     smr.set_plot_style()
     fig = plt.figure(figsize=plt.figaspect(1.5))
     ax = fig.add_subplot(2, 1, 1, projection="3d")
-    ax.set_ylabel("z")
+    ax.set_zlabel("z")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.set_title("Catch trials")
@@ -107,7 +107,7 @@ def plot_trajectories_split(correct, incorrect, elev=25, azim=-45, num=200):
     smr.despine()
 
     ax = fig.add_subplot(2, 1, 2, projection="3d")
-    ax.set_ylabel("z")
+    ax.set_zlabel("z")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.set_title("Miss trials")
@@ -133,7 +133,7 @@ def plot_curves(
         ax = fig.add_subplot(projection="3d")
     else:
         fig = ax.get_figure()
-    ax.set_ylabel("z")
+    ax.set_zlabel("z")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     # Do the plot for pass and fail

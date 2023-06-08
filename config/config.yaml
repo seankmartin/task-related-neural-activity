@@ -7,6 +7,7 @@ output_name: OpenDataResults
 gpfa_params:
   gpfa_window: 1.0
   gpfa_binsize: 40
+  decimate: True
 cca_params:
   cca_window: 1.0
   cca_binsize: 40

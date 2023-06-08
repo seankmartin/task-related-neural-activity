@@ -27,6 +27,7 @@ def analyse_single_recording(
     np.random.seed(42)
     gpfa_window = gpfa_params["gpfa_window"]
     gpfa_binsize = int(gpfa_params["gpfa_binsize"])
+    decimate = bool(gpfa_params["decimate"])
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
@@ -54,7 +55,8 @@ def analyse_single_recording(
         )
         save_info_to_file(None, recording, out_dir, brain_regions, rel_dir, bit="gpfa")
         return None
-    unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, br_str)
+    if decimate:
+        unit_table, spike_train = decimate_train_to_min(unit_table, spike_train, br_str)
     unit_table_name = name_from_recording(
         recording, f"unit_table_{regions_as_str}_decimated.csv", rel_dir
     )

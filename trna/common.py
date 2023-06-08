@@ -108,6 +108,7 @@ def decimate_train_to_min(unit_table, spike_train, br_str):
         region_units = unit_table[unit_table[br_str] == region]
         min_units = min(min_units, len(region_units))
     for region in brain_regions:
+        region_units = unit_table[unit_table[br_str] == region]
         if len(region_units) > min_units:
             random_units = np.random.choice(
                 range(len(region_units)), min_units, replace=False
@@ -236,3 +237,97 @@ def write_config(cfg_file, cfg, output_location):
         shutil.copy(cfg_file, output_location)
     else:
         cfg.write(output_location)
+
+
+def compute_distance(correct_curves, incorrect_curves):
+    average_correct = np.mean(correct_curves, axis=0)
+    average_incorrect = np.mean(incorrect_curves, axis=0)
+    starting_distance = np.linalg.norm(average_correct[:, 0] - average_incorrect[:, 0])
+    ending_distance = np.linalg.norm(average_correct[:, -1] - average_incorrect[:, -1])
+    return starting_distance, ending_distance
+
+
+def compute_variance(correct_curves, incorrect_curves, do_mean=True):
+    correct_variance = np.var(correct_curves, axis=0)
+    incorrect_variance = np.var(incorrect_curves, axis=0)
+    if do_mean:
+        correct_variance = np.mean(correct_variance)
+        incorrect_variance = np.mean(incorrect_variance)
+    return correct_variance, incorrect_variance
+
+
+def scale_data(correct_curves, incorrect_curves, uniform=False):
+    new_arr_correct = np.array([x for x in correct_curves])
+    new_arr_incorrect = np.array([x for x in incorrect_curves])
+
+    # Step 1, translate to 0
+    total_min_x = min(np.min(new_arr_correct[:, 0]), np.min(new_arr_incorrect[:, 0]))
+    total_min_y = min(np.min(new_arr_correct[:, 1]), np.min(new_arr_incorrect[:, 1]))
+    total_min_z = min(np.min(new_arr_correct[:, 2]), np.min(new_arr_incorrect[:, 2]))
+
+    new_arr_correct[:, 0] = new_arr_correct[:, 0] - total_min_x
+    new_arr_correct[:, 1] = new_arr_correct[:, 1] - total_min_y
+    new_arr_correct[:, 2] = new_arr_correct[:, 2] - total_min_z
+    new_arr_incorrect[:, 0] = new_arr_incorrect[:, 0] - total_min_x
+    new_arr_incorrect[:, 1] = new_arr_incorrect[:, 1] - total_min_y
+    new_arr_incorrect[:, 2] = new_arr_incorrect[:, 2] - total_min_z
+
+    # Step 2, scale to 1
+    max_val_x = max(
+        np.max(np.abs(new_arr_correct[:, 0])),
+        np.max(np.abs(new_arr_incorrect[:, 0])),
+    )
+    max_val_y = max(
+        np.max(np.abs(new_arr_correct[:, 1])),
+        np.max(np.abs(new_arr_incorrect[:, 1])),
+    )
+    max_val_z = max(
+        np.max(np.abs(new_arr_correct[:, 2])),
+        np.max(np.abs(new_arr_incorrect[:, 2])),
+    )
+    if uniform:
+        max_val_x = max_val_y = max_val_z = max(max_val_x, max_val_y, max_val_z)
+    new_arr_correct[:, 0] = new_arr_correct[:, 0] / max_val_x
+    new_arr_correct[:, 1] = new_arr_correct[:, 1] / max_val_y
+    new_arr_correct[:, 2] = new_arr_correct[:, 2] / max_val_z
+    new_arr_incorrect[:, 0] = new_arr_incorrect[:, 0] / max_val_x
+    new_arr_incorrect[:, 1] = new_arr_incorrect[:, 1] / max_val_y
+    new_arr_incorrect[:, 2] = new_arr_incorrect[:, 2] / max_val_z
+
+    return new_arr_correct, new_arr_incorrect
+
+
+def perform_scaling_and_stats(correct, incorrect, mean_only=True):
+    distances = compute_distance(correct, incorrect)
+    variances = compute_variance(correct, incorrect)
+    scaled_correct, scaled_incorrect = scale_data(correct, incorrect)
+    scaled_distances = compute_distance(scaled_correct, scaled_incorrect)
+    scaled_variances = compute_variance(scaled_correct, scaled_incorrect)
+    uniform_scaled_correct, uniform_scaled_incorrect = scale_data(
+        correct, incorrect, uniform=True
+    )
+    uniform_scaled_distances = compute_distance(
+        uniform_scaled_correct, uniform_scaled_incorrect
+    )
+    uniform_scaled_variances = compute_variance(
+        uniform_scaled_correct, uniform_scaled_incorrect
+    )
+    if mean_only:
+        distances = np.mean(distances)
+        scaled_distances = np.mean(scaled_distances)
+        uniform_scaled_distances = np.mean(uniform_scaled_distances)
+    return (
+        {
+            "distances": distances,
+            "variances": variances,
+            "scaled_distances": scaled_distances,
+            "scaled_variances": scaled_variances,
+            "uniform_scaled_distances": uniform_scaled_distances,
+            "uniform_scaled_variances": uniform_scaled_variances,
+        },
+        {
+            "original": [correct, incorrect],
+            "scaled": [scaled_correct, scaled_incorrect],
+            "uniform_scaled": [uniform_scaled_correct, uniform_scaled_incorrect],
+        },
+    )
