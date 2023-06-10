@@ -315,7 +315,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     smr.despine()
     smr_fig.save()
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     x = df["Average distance"]
     y = df["Procrustes distance"]
     z = df["Average variance"]
