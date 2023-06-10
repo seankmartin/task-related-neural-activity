@@ -98,6 +98,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
         elif info is not None:
             all_info.append(info)
     print(f"Analysed {len(all_info)} recordings with sufficient units")
+    if len(all_info) == 0:
+        return all_info
     output_dir = config["output_dir"] / "gpfa"
     regions_str = regions_to_string(regions)
     plot_gpfa_distance(all_info, output_dir, regions_str, n)
