@@ -203,10 +203,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     l2_info = []
     for tu in recording_info:
         correct, incorrect = tu["correct"], tu["incorrect"]
-
-        scaled_info = scale_data(correct, incorrect, uniform=True)
-        correct = scaled_info["uniform_scaled"][0]
-        incorrect = scaled_info["uniform_scaled"][1]
+        correct, incorrect = scale_data(correct, incorrect, uniform=True)
 
         average_trajectory_pass = np.mean(correct, axis=0)
         average_trajectory_fail = np.mean(incorrect, axis=0)
