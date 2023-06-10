@@ -2,7 +2,7 @@ rule analyse_gpfa:
     input:
         f"{config['local_dir']}/OpenDataResults/tables/ibl_brain_regions.csv"
     output:
-        f"{config['local_dir']}/OpenDataResults/gpfa/gpfa_distance_CA1_allen.png"
+        f"{config['local_dir']}/OpenDataResults/gpfa/gpfa_distance_CA1_allen.csv"
     params:
         overwrite = False
     log:
