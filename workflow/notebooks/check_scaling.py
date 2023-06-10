@@ -19,7 +19,7 @@ rc, loader = load_allen(
 )
 
 
-def analyse_rc(rc, config, out_dir):
+def analyse_rc(rc, config, out_dir, tname=""):
     all_distances = []
     for r in rc[:5]:
         r.load()
@@ -42,29 +42,30 @@ def analyse_rc(rc, config, out_dir):
         all_distances.append(distances_and_variances)
 
         # Do plots
+        n = r.get_name_for_save(config["allen_data_dir"])
         for name, data in scaled.items():
             fig = simple_trajectory_plot(data[0], data[1])
-            fig = SimuranFigure(fig, out_dir / f"simple_trajectory_plot_{name}")
+            fig = SimuranFigure(fig, out_dir / n / f"simple_trajectory_plot_{name}")
             fig.save()
 
             fig = plot_trajectories_split(data[0], data[1])
-            fig = SimuranFigure(fig, out_dir / f"plot_trajectories_split_{name}")
+            fig = SimuranFigure(fig, out_dir / n / f"plot_trajectories_split_{name}")
             fig.save()
         r.unload()
 
     distances_df = pd.DataFrame(all_distances)
-    distances_df.to_csv(out_dir / "distances.csv")
+    distances_df.to_csv(out_dir / f"{tname}_distances.csv")
 
 
-analyse_rc(rc, config, out_dir)
+analyse_rc(rc, config, out_dir, "normal")
 
 config["gpfa_params"]["decimate"] = False
 out_dir = Path(
     r"E:\Repos\task-related-neural-activity\workflow\figures\scaling_no_decimate"
 )
-analyse_rc(rc, config, out_dir)
+analyse_rc(rc, config, out_dir, "no_decimate")
 
 config["gpfa_params"]["decimate"] = True
 config["gpfa_params"]["gpfa_window"] = 20
 out_dir = Path(r"E:\Repos\task-related-neural-activity\workflow\figures\scaling_20ms")
-analyse_rc(rc, config, out_dir)
+analyse_rc(rc, config, out_dir, "20ms")

@@ -11,7 +11,8 @@ gpfa_params:
 cca_params:
   cca_window: 1.0
   cca_binsize: 40
-allen_brain_regions: [["CA1", "TH", "SUB"], ["VISp", "LGv", "TH"]]
+allen_brain_regions:
+  [["CA1", "TH", "SUB"], ["VISp", "LGv", "TH"], ["VISp", "LGv", "VISl"]]
 ibl_brain_regions:
   [
     ["CA1", "TH", "SUB"],

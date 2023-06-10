@@ -5,6 +5,7 @@ import seaborn as sns
 import simuran as smr
 from matplotlib.lines import Line2D
 from trna.distance_measurement import procrustes_modify, distance_between_curves
+from trna.common import scale_data
 
 
 def simple_trajectory_plot(correct, incorrect):
@@ -202,6 +203,11 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     l2_info = []
     for tu in recording_info:
         correct, incorrect = tu["correct"], tu["incorrect"]
+
+        scaled_info = scale_data(correct, incorrect, uniform=True)
+        correct = scaled_info["uniform_scaled"][0]
+        incorrect = scaled_info["uniform_scaled"][1]
+
         average_trajectory_pass = np.mean(correct, axis=0)
         average_trajectory_fail = np.mean(incorrect, axis=0)
 
@@ -240,6 +246,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
             angle_as_name = f"{angle['elev']}_{angle['azim']}"
             filename = (
                 out_dir
+                / brain_regions
                 / f"{tu['name']}_gpfa_curves_{angle_as_name}_{brain_regions}_{t}.png"
             )
             fig = smr.SimuranFigure(fig, filename=filename)
@@ -300,6 +307,32 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     filename = str(out_dir / f"gpfa_distance_average_{brain_regions}_{t}.png")
     smr_fig = smr.SimuranFigure(fig, filename)
     smr.despine()
+    smr_fig.save()
+
+    fig, ax = plt.subplots()
+    sns.scatterplot(df, x="Average distance", y="Procrustes distance", ax=ax)
+    filename = str(out_dir / f"gpfa_distance_average_{brain_regions}_{t}.png")
+    smr_fig = smr.SimuranFigure(fig, filename)
+    smr.despine()
+    smr_fig.save()
+
+    fig, ax = plt.subplots()
+    x = df["Average distance"]
+    y = df["Procrustes distance"]
+    z = df["Variance"]
+    ax.scatter(x, y, z, c="k")
+    filename = str(out_dir / f"gpfa_3dscatter_{brain_regions}_{t}.png")
+    smr.despine()
+    smr_fig = smr.SimuranFigure(fig, filename)
+    smr_fig.save()
+
+    fig, ax = plt.subplots()
+    sns.scatterplot(
+        df, x="Average distance", y="Procrustes distance", hue="Variance", ax=ax
+    )
+    filename = str(out_dir / f"gpfa_distance_average_variance_{brain_regions}_{t}.png")
+    smr.despine()
+    smr_fig = smr.SimuranFigure(fig, filename)
     smr_fig.save()
 
     fig, ax = plt.subplots()
