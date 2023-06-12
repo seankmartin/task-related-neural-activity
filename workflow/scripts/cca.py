@@ -18,7 +18,7 @@ from simuran import set_only_log_to_file
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
     regions_as_str = regions_to_string(brain_regions)
-    figs = plot_cca_example(info, brain_regions, t=0, num=15, win_len=win_len)
+    figs = plot_cca_example(info, brain_regions, t=0, num=25, num2=15, win_len=win_len)
     for k, f in figs.items():
         if f is None:
             continue
@@ -27,6 +27,7 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
         )
         fig = SimuranFigure(f, str(out_dir / out_name))
         fig.save()
+    plot_cca_correlation([info], out_dir, "_", regions_as_str, True)
 
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
@@ -92,7 +93,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
     print(f"Analysed {len(all_info)} recordings with sufficient units")
     output_dir = config["output_dir"] / "cca"
     regions_st = regions_to_string(regions)
-    figs = plot_cca_correlation(all_info, output_dir, n, regions_st)
+    figs = plot_cca_correlation(all_info, output_dir, n, regions_st, False)
     for k, fig in figs.items():
         if fig is None:
             continue
@@ -117,13 +118,6 @@ def main(main_config, brain_table_location, overwrite=False):
         analyse_container(
             overwrite, config, allen_recording_container, brain_region_pair
         )
-        # for brain_region in brain_region_pair:
-        #     analyse_container(
-        #         overwrite=overwrite,
-        #         config=config,
-        #         recording_container=allen_recording_container,
-        #         brain_regions=[brain_region, brain_region],
-        #     )
     for brain_region_pair in config["ibl_cca_regions"]:
         ibl_recording_container, ibl_loader = load_ibl(
             config["ibl_data_dir"], brain_table, brain_region_pair

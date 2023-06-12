@@ -350,7 +350,7 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     fig.save()
 
 
-def plot_cca_correlation(recording_info, out_dir, n, regions):
+def plot_cca_correlation(recording_info, out_dir, n, regions, scatter=True):
     if len(recording_info) == 0:
         return {}
     list_info = []
@@ -424,16 +424,21 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     df3.to_csv(out_dir / f"concat_cca_correlation_{n}_{regions}.csv", index=False)
 
     smr.set_plot_style()
-    fig1, ax = plt.subplots()
-    sns.lineplot(
-        data=df,
-        x="Delay",
-        y="Population correlation",
-        hue="Trial result",
-        style="Trial result",
-        ax=ax,
-    )
-    ax.set_title("CCA correlation")
+
+    if len(df[df["Delay"] == 0]) == 0:
+        fig1 = None
+    else:
+        fig1, ax = plt.subplots()
+        sns.lineplot(
+            data=df,
+            x="Delay",
+            y="Population correlation",
+            hue="Trial result",
+            style="Trial result",
+            ax=ax,
+        )
+        ax.set_title("CCA correlation")
+        smr.despine()
 
     if len(df2[df2["Delay"] == 0]) == 0:
         fig2 = None
@@ -444,20 +449,25 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
             y="Average rate 2",
             hue="Trial result",
             markers=["o", "x"],
+            scatter=scatter,
         )
+        smr.despine()
 
-    fig3, ax = plt.subplots()
-    sns.lineplot(
-        data=df3,
-        x="Delay",
-        y="Population correlation",
-        hue="Trial result",
-        style="Trial result",
-        ax=ax,
-    )
-    ax.set_title("Concatenated CCA correlation")
+    if len(df3[df3["Delay"] == 0]) == 0:
+        fig3 = None
+    else:
+        fig3, ax = plt.subplots()
+        sns.lineplot(
+            data=df3,
+            x="Delay",
+            y="Population correlation",
+            hue="Trial result",
+            style="Trial result",
+            ax=ax,
+        )
+        ax.set_title("CCA correlation")
+        smr.despine()
 
-    smr.despine()
     return {
         "per_trial": fig1,
         "rate_based": fig2,
@@ -465,7 +475,7 @@ def plot_cca_correlation(recording_info, out_dir, n, regions):
     }
 
 
-def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
+def plot_cca_example(recording_info, brain_regions, t=0, num=10, num2=10, win_len=1):
     list_info = []
     p1_correct = []
     p2_incorrect = []
@@ -523,8 +533,8 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
     custom_lines = [
-        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
-        Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
+        Line2D([], [], color="sienna", alpha=0.8, linestyle="none", marker="o"),
+        Line2D([], [], color="darkblue", alpha=0.8, linestyle="none", marker="x"),
     ]
 
     ax.legend(
@@ -547,8 +557,8 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
     ax.set_ylabel("N2")
     ax.set_zlabel("N3")
     custom_lines = [
-        Line2D([0], [0], color="sienna", alpha=0.3, lw=1),
-        Line2D([0], [0], color="darkblue", alpha=0.3, lw=1),
+        Line2D([], [], color="sienna", alpha=0.8, linestyle="none", marker="o"),
+        Line2D([], [], color="darkblue", alpha=0.8, linestyle="none", marker="x"),
     ]
 
     ax.legend(
@@ -562,7 +572,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, win_len=1):
 
     # Plot 3 - spike rates in 2d
     fig2, ax = plt.subplots()
-    num_raster_trials = num
+    num_raster_trials = num2
     for i, region in enumerate(per_trial_spikes):
         for j, trial in enumerate(region[:num_raster_trials]):
             change = i * len(per_trial_spikes[0][0])

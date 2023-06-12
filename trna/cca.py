@@ -32,6 +32,7 @@ def analyse_single_recording(
     print("Analysing recording: " + recording.get_name_for_save(base_dir))
     cca_window = cca_params["cca_window"]
     cca_bin_size = cca_params["cca_binsize"] / 1000
+    cca_skip_rate = cca_params["cca_skiprate"]
     rel_dir = base_dir
     is_allen = isinstance(recording.loader, BaseAllenLoader)
     br_str = "structure_acronym" if is_allen else "acronym"
@@ -69,7 +70,7 @@ def analyse_single_recording(
     if t_range == 0:
         r = [0]
     else:
-        r = range(-t_range, t_range + 1, 2)
+        r = range(-t_range, t_range + 1, cca_skip_rate)
 
     correct = []
     incorrect = []
