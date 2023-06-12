@@ -302,15 +302,15 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
         smr_fig.save()
 
     fig, ax = plt.subplots()
-    sns.scatterplot(df, x="Average distance", y="Procrustes distance", ax=ax)
+    sns.regplot(df, y="Average distance", x="Procrustes distance", ax=ax)
     filename = str(out_dir / f"gpfa_distance_average_{brain_regions}_{t}.png")
     smr_fig = smr.SimuranFigure(fig, filename)
     smr.despine()
     smr_fig.save()
 
     fig, ax = plt.subplots()
-    sns.scatterplot(df, x="Average distance", y="Procrustes distance", ax=ax)
-    filename = str(out_dir / f"gpfa_distance_average_{brain_regions}_{t}.png")
+    sns.regplot(df, x="Procrustes distance", y="Average variance", ax=ax)
+    filename = str(out_dir / f"gpfa_procrustes_vs_variance_{brain_regions}_{t}.png")
     smr_fig = smr.SimuranFigure(fig, filename)
     smr.despine()
     smr_fig.save()
@@ -320,6 +320,11 @@ def plot_gpfa_distance(recording_info, out_dir, brain_regions, t):
     y = df["Procrustes distance"]
     z = df["Average variance"]
     ax.plot(x, y, z, "o")
+
+    ax.plot(x, y, ".", zdir="z", zs=-0.2, color="black")
+    ax.plot(x, z, ".", zdir="y", zs=-0.2, color="black")
+    ax.plot(y, z, ".", zdir="x", zs=-0.2, color="black")
+
     ax.set_xlabel("Average distance")
     ax.set_ylabel("Procrustes distance")
     ax.set_zlabel("Average variance")
