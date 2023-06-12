@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import pandas as pd
 from trna.allen import load_allen
 from trna.ibl import load_ibl
@@ -18,7 +19,7 @@ from simuran import set_only_log_to_file
 
 def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
     regions_as_str = regions_to_string(brain_regions)
-    figs = plot_cca_example(info, brain_regions, t=0, num=25, num2=15, win_len=win_len)
+    figs = plot_cca_example(info, brain_regions, t=0, num=30, num2=10, win_len=win_len)
     for k, f in figs.items():
         if f is None:
             continue
@@ -27,7 +28,17 @@ def plot_data(recording, info, out_dir, brain_regions, rel_dir=None, win_len=1):
         )
         fig = SimuranFigure(f, str(out_dir / out_name))
         fig.save()
-    plot_cca_correlation([info], out_dir, "_", regions_as_str, True)
+        fig.close()
+    figs = plot_cca_correlation([info], out_dir, "_", regions_as_str, True)
+    for k, f in figs.items():
+        if f is None:
+            continue
+        out_name = name_from_recording(
+            recording, f"cca_correlation_{regions_as_str}_{k}.png", rel_dir=rel_dir
+        )
+        fig = SimuranFigure(f, str(out_dir / out_name))
+        fig.save()
+        fig.close()
 
 
 def analyse_container(overwrite, config, recording_container, brain_regions):
@@ -62,6 +73,7 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
                 output_dir,
                 config[rel_dir_path],
                 regions,
+                t_range=80,
                 filter_prop=config[f"{n}_filter_properties"],
             )
         if info is not None:
@@ -73,6 +85,8 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
                 rel_dir=config[rel_dir_path],
                 win_len=config["cca_params"]["cca_window"],
             )
+            for i in plt.get_fignums():
+                plt.close()
     all_info = []
     for i, recording in enumerate(recording_container):
         output_dir = (
@@ -101,6 +115,9 @@ def analyse_container(overwrite, config, recording_container, brain_regions):
             fig, str(output_dir / f"{n}_{regions_st}_{k}_cca_correlation.png")
         )
         sm_fig.save()
+        sm_fig.close()
+    for i in plt.get_fignums():
+        plt.close()
 
     return all_info
 

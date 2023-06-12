@@ -597,7 +597,7 @@ def plot_cca_example(recording_info, brain_regions, t=0, num=10, num2=10, win_le
     ax.hlines(
         len(per_trial_spikes[0][0]),
         0,
-        win_len * num,
+        win_len * num2,
         color="r",
         linestyle="--",
         linewidths=0.5,
