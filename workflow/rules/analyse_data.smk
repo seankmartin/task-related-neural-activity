@@ -14,7 +14,7 @@ rule analyse_cca:
     input:
         f"{config['local_dir']}/OpenDataResults/tables/ibl_brain_regions.csv"
     output:
-        f"{config['local_dir']}/OpenDataResults/cca/rate_correlation_allen_CA1_SUB.csv"
+        f"{config['local_dir']}/OpenDataResults/cca/cca_correlation_allen_CA1_SUB.csv"
     params:
         overwrite = False
     log:

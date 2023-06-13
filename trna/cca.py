@@ -157,6 +157,14 @@ def analyse_single_recording(
             else:
                 unsplit_corr_info_incorrect.append([t, c])
 
+        if len(incorrect) == 0:
+            module_logger.warning(
+                "Not incorrect trials for {}".format(recording.get_name_for_save())
+            )
+            save_info_to_file(
+                None, recording, out_dir, brain_regions, rel_dir, bit="cca"
+            )
+            return None
         correct_concat1 = np.concatenate(
             [c[2][0].T for c in correct if c[0] == t], axis=0
         )

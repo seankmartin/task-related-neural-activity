@@ -19,14 +19,14 @@ ibl_brain_regions:
     ["CA1", "TH", "SUB"],
     [["VISp1", "VISp2/3", "VISp4", "VISp5", "VISp6a", "VISp6b"], "LGv", "TH"],
   ]
-allen_cca_regions:
-  [
-    ["CA1", "SUB"],
-    ["CA1", "TH"],
-    ["SUB", "TH"],
-    ["VISp", "LGv"],
-    ["VISp", "TH"],
-    ["LGv", "TH"],
+allen_cca_regions: [
+    # ["CA1", "SUB"],
+    # ["CA1", "TH"],
+    # ["SUB", "TH"],
+    # ["VISp", "LGv"],
+    # ["VISp", "TH"],
+    # ["LGv", "TH"],
+    ["VISp", "VISl"],
   ]
 ibl_cca_regions:
   [

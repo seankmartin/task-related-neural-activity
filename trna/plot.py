@@ -437,7 +437,7 @@ def plot_cca_correlation(recording_info, out_dir, n, regions, scatter=True):
             style="Trial result",
             ax=ax,
         )
-        ax.set_title("CCA correlation")
+        ax.set_title("CCA correlation per trial")
         smr.despine()
 
     if len(df2[df2["Delay"] == 0]) == 0:
@@ -465,7 +465,7 @@ def plot_cca_correlation(recording_info, out_dir, n, regions, scatter=True):
             style="Trial result",
             ax=ax,
         )
-        ax.set_title("CCA correlation")
+        ax.set_title(f"CCA correlation for {regions.replace('_', ' ')}")
         smr.despine()
 
     return {
