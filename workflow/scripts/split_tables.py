@@ -19,6 +19,8 @@ def create_delay_splits(df, split="Trial result"):
 def main(path_with_dfs):
     csv_files = get_all_files_in_dir(str(path_with_dfs), ".csv")
     for path in csv_files:
+        if path.endswith("converted.csv"):
+            continue
         df = pd.read_csv(path)
         df_converted = create_delay_splits(df)
         df_converted.to_csv(path[:-4] + "_converted.csv")

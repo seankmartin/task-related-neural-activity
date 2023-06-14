@@ -34,6 +34,16 @@ rule plot_units:
 
 rule split_tables:
     input:
-        f"{config['local_dir']}/OpenDataResults/cca/rate_correlation_allen_CA1_SUB.csv"
+        f"{config['local_dir']}/OpenDataResults/cca/cca_correlation_allen_CA1_SUB.csv"
     output:
-        f"{config['local_dir']}/OpenDataResults/cca/rate_correlation_allen_CA1_SUB_converted.csv"
+        f"{config['local_dir']}/OpenDataResults/cca/cca_correlation_allen_CA1_SUB_converted.csv"
+    script:
+        "../scripts/split_tables.py"
+
+rule count_trials:
+    input:
+        f"{config['local_dir']}/OpenDataResults/cca/cca_correlation_allen_CA1_SUB_converted.csv"
+    output:
+        f"{config['local_dir']}/OpenDataResults/cca/count.txt"
+    script:
+        "../scripts/count_trials.py"
